@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Mark Febrizio
-
-Created: 2023-12-21
-Last modified: 2023-12-21
-"""
 from collections import Counter
 
 
