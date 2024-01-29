@@ -233,8 +233,8 @@ class AgencyData:
         """
         return self.metadata.get(agency_slug, {}).get(key, None)
     
-    def return_column_as_str(self, input_values: list | tuple | set | int | float, sep: str = "; "):
-        """Return values of column as a string (e.g., ["a", "b", "c"] -> "a; b; c", 1.23 -> "1.23").
+    def return_values_as_str(self, input_values: list | tuple | set | int | float, sep: str = "; "):
+        """Return values as a string (e.g., ["a", "b", "c"] -> "a; b; c", 1.23 -> "1.23").
         Converts `list`, `tuple`, `set`, `int`, or `float` to `str`; otherwise returns value unaltered.
 
         Args:
