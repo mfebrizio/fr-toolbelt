@@ -1,7 +1,7 @@
 
-from dockets import RegsDotGovData
-from presidents import Presidents
-from rin import RegInfoData
+from .dockets import RegsDotGovData
+from .presidents import Presidents
+from .rin import RegInfoData
 
 
 class PreprocessingError:

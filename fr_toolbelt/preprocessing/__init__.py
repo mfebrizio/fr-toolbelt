@@ -6,22 +6,25 @@ __all__ = [
     "agencies", 
     "dates", 
     "dockets", 
+    "documents", 
     "duplicates", 
     "presidents", 
     "rin", 
     "utils", 
     ]
 
-from .agencies import *
+from .agencies import AgencyMetadata, AgencyData
 
 from .dates import *
 
-from .dockets import *
+from .dockets import RegsDotGovData
+
+from .documents import process_documents
 
 from .duplicates import *
 
-from .presidents import *
+from .presidents import Presidents
 
-from .rin import *
+from .rin import RegInfoData
 
 from .utils import *

@@ -1,4 +1,5 @@
 from pathlib import Path
+import json
 from pprint import pprint
 
 from requests import get
@@ -6,7 +7,12 @@ from requests import get
 from fr_toolbelt.api_requests import (
     retrieve_results_by_next_page, 
     )
-from fr_toolbelt.preprocessing import *
+
+from fr_toolbelt.preprocessing import (
+    AgencyMetadata, 
+    AgencyData,
+    process_documents, 
+    )
 
 
 # TEST OBJECTS AND UTILS #
@@ -38,7 +44,11 @@ TEST_RESPONSE_PARTIAL = get(ENDPOINT_URL, TEST_PARAMS_PARTIAL).json()
 TEST_COUNT_PARTIAL = TEST_RESPONSE_PARTIAL["count"]
 
 
-# retrieve_documents #
+with open(TESTS_PATH / "test_documents.json", "r", encoding="utf-8") as f:
+    TEST_DATA = json.load(f).get("results", [])
+    
+
+# api_requests.get_documents #
 
 
 def test_retrieve_results_by_next_page_full(
@@ -60,12 +70,47 @@ def test_retrieve_results_by_next_page_partial(
     assert len(results) == 10000, f"Should return 10000; compare to API call: {TEST_URL_PARTIAL}"
 
 
+# preprocessing.documents #
+
+def test_process_documents_all(documents = TEST_DATA):
+    data = process_documents(documents)
+    assert (len(data) == len(documents)) and isinstance(data, list)
+
+
+# preprocessing.agencies #
+
+def test_agencies_get_metadata():
+    
+    agency_metadata = AgencyMetadata()
+    agency_metadata.get_metadata()
+    assert isinstance(agency_metadata.data, list[dict])
+
+def test_agencies_transform():
+    
+    agency_metadata = AgencyMetadata()
+    agency_metadata.get_metadata()
+    agency_metadata.transform()
+    assert (
+        len(agency_metadata.transformed_data) > 0
+        ) and (
+            isinstance(agency_metadata.transformed_data, dict[dict])
+            )
+
+
+
+
+
+
+
 # tuple of all tests #
 
 
 ALL_TESTS = (
     test_retrieve_results_by_next_page_full, 
     test_retrieve_results_by_next_page_partial, 
+    test_process_documents_all, 
+    test_agencies_get_metadata, 
+    test_agencies_transform, 
     )
 
 
