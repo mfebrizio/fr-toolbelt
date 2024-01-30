@@ -33,7 +33,7 @@ class RegsDotGovData:
         
         return document_copy
     
-    def process_docket_data(self) -> list[dict]:
+    def process_data(self) -> list[dict]:
         return [self.create_docket_key(doc, values=self.extract_docket_info(doc)) for doc in self.documents]
 
 if __name__ == "__main__":

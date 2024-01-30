@@ -48,7 +48,7 @@ class RegInfoData:
         
         return document_copy
     
-    def process_rin_data(self) -> list[dict]:
+    def process_data(self) -> list[dict]:
         return [self.create_rin_keys(doc, values=self.extract_rin_info(doc)) for doc in self.documents]
 
 

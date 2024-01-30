@@ -36,7 +36,7 @@ class Presidents:
         
         return document_copy
     
-    def process_president_data(self) -> list[dict]:
+    def process_data(self) -> list[dict]:
         return [self.create_president_key(doc, values=self.extract_president_info(doc)) for doc in self.documents]
 
 
