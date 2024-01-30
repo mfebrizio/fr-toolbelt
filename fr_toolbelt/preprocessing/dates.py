@@ -19,7 +19,7 @@ def extract_year(string: str):
         return None
 
 
-def convert_to_datetime_date(input_date: date| str):
+def convert_to_datetime_date(input_date: date | str):
     if isinstance(input_date, date):
         return input_date
     elif isinstance(input_date, str):
