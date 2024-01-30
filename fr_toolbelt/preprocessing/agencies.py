@@ -41,7 +41,10 @@ class AgencyMetadata:
         self.transformed_data = {}
         self.schema = []
     
-    def get_metadata(self, endpoint_url: str = r"https://www.federalregister.gov/api/v1/agencies.json"):
+    def get_metadata(
+        self, 
+        endpoint_url: str = r"https://www.federalregister.gov/api/v1/agencies.json"
+        ) -> None:
         """Queries the GET agencies endpoint of the Federal Register API.
         Retrieve agencies metadata. After defining endpoint url, no parameters are needed.
 
@@ -59,7 +62,7 @@ class AgencyMetadata:
         # return response as json
         self.data = agencies_response.json()
     
-    def get_schema(self, metadata: dict[dict] = None):
+    def get_schema(self, metadata: dict[dict] = None) -> None:
         """Get Agency schema of agencies available from API.
 
         Args:
@@ -71,8 +74,8 @@ class AgencyMetadata:
             schema = [f"{agency.get('slug')}" for agency in self.data if agency.get("slug", "") != ""]
         self.schema = schema
     
-    def transform(self):
-        """Transform self.data from original format of iterable[dict] to dict[dict].
+    def transform(self) -> None:
+        """Transform self.data from original format of list[dict] to dict[dict].
         """        
         if self.transformed_data != {}:
             print("Metadata already transformed! Access it with self.transformed_data.")
