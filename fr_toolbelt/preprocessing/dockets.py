@@ -1,4 +1,5 @@
 # no imports; all native python
+#from copy import deepcopy
 
 
 class RegsDotGovData:
@@ -23,7 +24,7 @@ class RegsDotGovData:
         
         return values
 
-    def create_docket_key(document: dict, values: str = None) -> dict:
+    def create_docket_key(self, document: dict, values: str = None) -> dict:
         document_copy = document.copy()
             
         document_copy.update({
@@ -33,8 +34,8 @@ class RegsDotGovData:
         return document_copy
     
     def process_data(self) -> list[dict]:
-        print(set(type(self.extract_docket_info(doc)) for doc in self.documents))
-        #return [self.create_docket_key(doc, values=self.extract_docket_info(doc)) for doc in self.documents]
+        #print(set(type(self.extract_docket_info(doc)) for doc in self.documents))
+        return [self.create_docket_key(doc, values=self.extract_docket_info(doc)) for doc in self.documents]
 
 if __name__ == "__main__":
     

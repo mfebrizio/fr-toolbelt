@@ -26,7 +26,7 @@ class Presidents:
 
         return values
 
-    def create_president_key(document: dict, values: str = None) -> dict:
+    def create_president_key(self, document: dict, values: str = None) -> dict:
         
         document_copy = document.copy()
         
