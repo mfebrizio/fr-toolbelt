@@ -260,7 +260,7 @@ def get_documents_by_number(document_numbers: list,
 
 
 def extract_document_numbers(df: DataFrame, pattern: str = r"(?:[a-z]\d-)?[\w|\d]{2,4}-[\d]{5,}") -> list[str]:
-    """Extract list of Federal Register document numbers from a DataFrame.
+    r"""Extract list of Federal Register document numbers from a DataFrame.
 
     Args:
         df (DataFrame): Input data.
