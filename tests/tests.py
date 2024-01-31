@@ -10,7 +10,8 @@ from fr_toolbelt.api_requests import (
 
 from fr_toolbelt.preprocessing import (
     AgencyMetadata, 
-    AgencyData,
+    AgencyData, 
+    RegsDotGovData, 
     process_documents, 
     )
 
@@ -83,7 +84,7 @@ def test_agencies_get_metadata():
     
     agency_metadata = AgencyMetadata()
     agency_metadata.get_metadata()
-    assert isinstance(agency_metadata.data, list[dict])
+    assert isinstance(agency_metadata.data, list)
 
 def test_agencies_transform():
     
@@ -93,7 +94,7 @@ def test_agencies_transform():
     assert (
         len(agency_metadata.transformed_data) > 0
         ) and (
-            isinstance(agency_metadata.transformed_data, dict[dict])
+            isinstance(agency_metadata.transformed_data, dict)
             )
 
 
