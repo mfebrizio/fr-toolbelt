@@ -1,30 +1,32 @@
-# no imports; all native python
+try:
+    from .fields import FieldData
+except ImportError:
+    from fields import FieldData
 
 
-class RegInfoData:
+class RegInfoData(FieldData):
     
     def __init__(self, 
                  documents: list[dict], 
                  field_key: str = "regulation_id_number_info", 
                  subfield_keys: tuple[str] = ("priority_category", "issue"), 
-                 
+                 value_keys: tuple[str] = ("rin", "rin_priority")
                  ) -> None:
-        self.documents = documents
-        self.field_key = field_key
+        super().__init__(documents=documents, field_key=field_key, subfield_keys=subfield_keys, value_keys=value_keys)
 
-    def __extract_rin_info(self, document: dict) -> tuple:
+    def _extract_field_info(self, document: dict) -> tuple:
         
-        rin_info = document.get(self.key, {})
+        field_info = document.get(self.field_key, {})
         
         tuple_list = []
-        if len(rin_info)==0:
+        if len(field_info)==0:
             tuple_list.append(None)
         else:
-            for k, v in rin_info.items():
+            for k, v in field_info.items():
                 if v:
-                    n_tuple = (k, v.get('priority_category'), v.get('issue'))
+                    n_tuple = (k, v.get(self.subfield_keys[0]), v.get(self.subfield_keys[1]))
                 else:
-                    n_tuple = (k, '', '')
+                    n_tuple = (k, "", "")
                     
             tuple_list.append(n_tuple)
             try:
@@ -35,28 +37,13 @@ class RegInfoData:
         # only return RIN info from most recent Unified Agenda issue
         return tuple_list[0]
 
-    def __create_rin_keys(self, document: dict, values: tuple = None) -> dict:
-
-        document_copy = document.copy()
-        
-        # values: rin_info tuples (RIN, Priority, UA issue)
-        if values is None:
-            document_copy.update({
-                "rin": None, 
-                "rin_priority": None, 
-                })
-        else:
-            document_copy.update({
-                "rin": values[0], 
-                "rin_priority": values[1], 
-                })
-        
-        return document_copy
-    
-    def process_data(self) -> list[dict]:
-        return [self.__create_rin_keys(doc, values=self.__extract_rin_info(doc)) for doc in self.documents]
-
 
 if __name__ == "__main__":
     
-    pass
+    test_documents = [{f"{n}": n} for n in range(10)]
+    test_instance = RegInfoData(test_documents)
+    print(type(test_instance))
+    print(dir(test_instance))
+    print(test_instance.field_key, 
+          test_instance.subfield_keys, 
+          test_instance.value_keys)

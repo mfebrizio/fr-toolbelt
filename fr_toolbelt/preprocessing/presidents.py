@@ -1,45 +1,36 @@
-# no imports; all native python
+from .fields import FieldData
 
 
-class Presidents:
+class Presidents(FieldData):
     def __init__(
             self, 
             documents: list[dict], 
-            key: str = "president", 
+            field_key: str = "president", 
+            subfield_key: str = "identifier", 
+            value_key: str = "president_id", 
             schema: dict = {
                 "transition_years": (1993, 2001, 2009, 2017, 2021), 
                 "presidents": ("william-j-clinton", "george-w-bush", "barack-obama", "donald-trump", "joe-biden"), 
                 }
         ) -> None:
-        self.documents = documents
-        self.key = key
+        super().__init__(documents=documents, field_key=field_key, subfield_key=subfield_key, value_key=value_key)
         self.schema = schema
 
-    def __extract_president_info(self, document: dict) -> str | None:
+    def _extract_field_info(self, document: dict) -> str | None:
         
-        president_info = document.get(self.key, {})
+        field_info = document.get(self.field_key, {})
         
-        if len(president_info) == 0:
+        if len(field_info) == 0:
             values = None
         else:
-            values = president_info.get("identifier")
+            values = field_info.get(self.subfield_key)
 
         return values
-
-    def __create_president_key(self, document: dict, values: str = None) -> dict:
-        
-        document_copy = document.copy()
-        
-        document_copy.update({
-            "president_id": values, 
-            })
-        
-        return document_copy
-    
-    def process_data(self) -> list[dict]:
-        return [self.__create_president_key(doc, values=self.__extract_president_info(doc)) for doc in self.documents]
 
 
 if __name__ == "__main__":
     
-    pass
+    test_documents = [{f"{n}": n} for n in range(10)]
+    test_instance = Presidents(test_documents)
+    print(type(test_instance))
+    print(dir(test_instance))
