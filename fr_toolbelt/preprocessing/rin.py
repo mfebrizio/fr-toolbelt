@@ -3,11 +3,16 @@
 
 class RegInfoData:
     
-    def __init__(self, documents: list[dict], key: str = "regulation_id_number_info") -> None:
+    def __init__(self, 
+                 documents: list[dict], 
+                 field_key: str = "regulation_id_number_info", 
+                 subfield_keys: tuple[str] = ("priority_category", "issue"), 
+                 
+                 ) -> None:
         self.documents = documents
-        self.key = key
+        self.field_key = field_key
 
-    def extract_rin_info(self, document: dict) -> tuple:
+    def __extract_rin_info(self, document: dict) -> tuple:
         
         rin_info = document.get(self.key, {})
         
@@ -30,11 +35,11 @@ class RegInfoData:
         # only return RIN info from most recent Unified Agenda issue
         return tuple_list[0]
 
-    def create_rin_keys(self, document: dict, values: tuple = None) -> dict:
+    def __create_rin_keys(self, document: dict, values: tuple = None) -> dict:
 
         document_copy = document.copy()
         
-        # source: rin_info tuples (RIN, Priority, UA issue)
+        # values: rin_info tuples (RIN, Priority, UA issue)
         if values is None:
             document_copy.update({
                 "rin": None, 
@@ -49,7 +54,7 @@ class RegInfoData:
         return document_copy
     
     def process_data(self) -> list[dict]:
-        return [self.create_rin_keys(doc, values=self.extract_rin_info(doc)) for doc in self.documents]
+        return [self.__create_rin_keys(doc, values=self.__extract_rin_info(doc)) for doc in self.documents]
 
 
 if __name__ == "__main__":
