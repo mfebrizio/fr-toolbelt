@@ -12,6 +12,8 @@ from fr_toolbelt.preprocessing import (
     AgencyMetadata, 
     AgencyData, 
     RegsDotGovData, 
+    Presidents,
+    RegInfoData, 
     process_documents, 
     )
 
@@ -71,23 +73,121 @@ def test_retrieve_results_by_next_page_partial(
     assert len(results) == 10000, f"Should return 10000; compare to API call: {TEST_URL_PARTIAL}"
 
 
+test_get_documents = (
+    test_retrieve_results_by_next_page_full, 
+    test_retrieve_results_by_next_page_partial, 
+    )
+
+
+# preprocessing.dockets #
+
+
+def test_extract_docket_info(documents = TEST_DATA):
+    dockets = RegsDotGovData(documents)
+    data = (dockets._extract_field_info(doc) for doc in dockets.documents)
+    assert all((isinstance(d, str) or d is None) for d in data)
+
+
+def test_create_docket_key(documents = TEST_DATA):
+    dockets = RegsDotGovData(documents)
+    data = (dockets._create_value_key(doc, values="test") for doc in dockets.documents)
+    assert all((isinstance(d, dict) and d.get(dockets.value_key) == "test") for d in data)
+
+
+def test_process_docket_data(documents = TEST_DATA):
+    dockets = RegsDotGovData(documents)
+    data = dockets.process_data()
+    assert isinstance(data, list) and (len(data) == len(documents))
+
+
+test_dockets = (
+    test_extract_docket_info, 
+    test_create_docket_key, 
+    test_process_docket_data, 
+)
+
+
+# preprocessing.presidents #
+
+
+def test_extract_president_info(documents = TEST_DATA):
+    prez = Presidents(documents)
+    data = (prez._extract_field_info(doc) for doc in prez.documents)
+    assert all((isinstance(d, str) or d is None) for d in data)
+
+
+def test_create_president_key(documents = TEST_DATA):
+    prez = Presidents(documents)
+    data = (prez._create_value_key(doc, values="test") for doc in prez.documents)
+    #print([(isinstance(d, dict) and d.get("president_id")=="test") for d in data][0:20])
+    assert all((isinstance(d, dict) and d.get(prez.value_key) == "test") for d in data)
+
+
+def test_process_president_data(documents = TEST_DATA):
+    prez = Presidents(documents)
+    data = prez.process_data()
+    assert isinstance(data, list) and (len(data) == len(documents))
+
+
+test_presidents = (
+    test_extract_president_info, 
+    test_create_president_key, 
+    test_process_president_data, 
+)
+
+
+# preprocessing.rin #
+
+
+def test_extract_rin_info(documents = TEST_DATA):
+    rin = RegInfoData(documents)
+    data = (rin._extract_field_info(doc) for doc in rin.documents)
+    assert all((isinstance(d, tuple) or d is None) for d in data)
+
+
+def test_create_rin_key(documents = TEST_DATA):
+    rin = RegInfoData(documents)
+    data = (rin._create_value_keys(doc, values=("test1", "test2")) for doc in rin.documents)
+    #pprint(rin.value_keys)
+    #pprint([d for d in data][0])
+    assert all(
+        isinstance(d, dict) 
+        and (d.get(rin.value_keys[0]) == "test1") 
+        and (d.get(rin.value_keys[1]) == "test2") 
+        for d in data)
+
+
+def test_process_rin_data(documents = TEST_DATA):
+    rin = RegInfoData(documents)
+    data = rin.process_data()
+    assert isinstance(data, list) and (len(data) == len(documents))
+
+
+test_rin = (
+    test_extract_rin_info, 
+    test_create_rin_key, 
+    test_process_rin_data, 
+)
+
+
 # preprocessing.documents #
+
 
 def test_process_documents_all(documents = TEST_DATA):
     data = process_documents(documents)
-    assert (len(data) == len(documents)) and isinstance(data, list)
+    assert isinstance(data, list) and (len(data) == len(documents))
 
 
 # preprocessing.agencies #
 
+
 def test_agencies_get_metadata():
-    
     agency_metadata = AgencyMetadata()
     agency_metadata.get_metadata()
     assert isinstance(agency_metadata.data, list)
 
+
 def test_agencies_transform():
-    
     agency_metadata = AgencyMetadata()
     agency_metadata.get_metadata()
     agency_metadata.transform()
@@ -98,26 +198,26 @@ def test_agencies_transform():
             )
 
 
-
-
-
+test_agencies = (
+    test_agencies_get_metadata, 
+    test_agencies_transform, 
+)
 
 
 # tuple of all tests #
-
-
-ALL_TESTS = (
-    test_retrieve_results_by_next_page_full, 
-    test_retrieve_results_by_next_page_partial, 
-    test_process_documents_all, 
-    test_agencies_get_metadata, 
-    test_agencies_transform, 
+all_tests = (
+    test_get_documents 
+    + test_dockets 
+    + test_presidents 
+    + test_rin
+    + test_agencies
+    + (test_process_documents_all, )
     )
 
 
 if __name__ == "__main__":
     
-    for func in ALL_TESTS:
+    for func in all_tests:
         func()
     
     print("Tests complete.")
