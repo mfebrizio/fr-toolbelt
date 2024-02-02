@@ -6,10 +6,10 @@ import re
 from pandas import DataFrame, read_csv, read_excel
 import requests
 
+from .format_dates import DateFormatter
+
 from fr_toolbelt.preprocessing import (
-    date_in_quarter, 
-    extract_year, 
-    greater_than_date, 
+    DateFormatter, 
     identify_duplicates, 
     )
 
@@ -110,16 +110,16 @@ def query_documents_endpoint(endpoint_url: str, dict_params: dict):
     elif response["count"] > max_documents_threshold:
         
         # get range of dates
-        start_date = dict_params.get("conditions[publication_date][gte]")
-        end_date = dict_params.get("conditions[publication_date][lte]")
+        start_date = DateFormatter(dict_params.get("conditions[publication_date][gte]"))
+        end_date = DateFormatter(dict_params.get("conditions[publication_date][lte]"))
         
         # set range of years
-        start_year = extract_year(start_date)
+        start_year = start_date.get_year()  #extract_year(start_date)
         if end_date is None:
             end_date = date.today()
             end_year = end_date.year
         else:
-            end_year = extract_year(end_date)
+            end_year = end_date.get_year()
         years = range(start_year, end_year + 1)
         
         # format: YYYY-MM-DD
@@ -135,12 +135,12 @@ def query_documents_endpoint(endpoint_url: str, dict_params: dict):
                 results_qrt = []
                 
                 # set start and end dates based on input date
-                gte = date_in_quarter(start_date, year, quarter, return_quarter_end=False)
-                lte = date_in_quarter(end_date, year, quarter)
-                if greater_than_date(start_date, lte):
+                gte = start_date.date_in_quarter(year, quarter, return_quarter_end=False)
+                lte = end_date.date_in_quarter(year, quarter)
+                if start_date.greater_than_date(lte):
                     # skip quarters where start_date is later than last day of quarter
                     continue
-                elif greater_than_date(gte, end_date):
+                elif end_date.less_than_date(gte):
                     # skip quarters where end_date is ealier than first day of quarter
                     break
                 
