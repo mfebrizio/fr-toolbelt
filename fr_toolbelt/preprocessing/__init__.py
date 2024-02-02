@@ -17,7 +17,7 @@ from .agencies import AgencyMetadata, AgencyData
 
 from .dates import *
 
-from .dockets import RegsDotGovData
+from .dockets import RegsDotGovData, Dockets
 
 from .documents import process_documents
 

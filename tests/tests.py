@@ -12,6 +12,7 @@ from fr_toolbelt.preprocessing import (
     AgencyMetadata, 
     AgencyData, 
     RegsDotGovData, 
+    Dockets, 
     Presidents,
     RegInfoData, 
     process_documents, 
@@ -82,25 +83,46 @@ test_get_documents = (
 # preprocessing.dockets #
 
 
-def test_extract_docket_info(documents = TEST_DATA):
+def test_extract_regsdotgov_info(documents = TEST_DATA):
     dockets = RegsDotGovData(documents)
     data = (dockets._extract_field_info(doc) for doc in dockets.documents)
     assert all((isinstance(d, str) or d is None) for d in data)
 
 
-def test_create_docket_key(documents = TEST_DATA):
+def test_create_regsdotgov_key(documents = TEST_DATA):
     dockets = RegsDotGovData(documents)
     data = (dockets._create_value_key(doc, values="test") for doc in dockets.documents)
     assert all((isinstance(d, dict) and d.get(dockets.value_key) == "test") for d in data)
 
 
-def test_process_docket_data(documents = TEST_DATA):
+def test_process_regsdotgov_data(documents = TEST_DATA):
     dockets = RegsDotGovData(documents)
     data = dockets.process_data()
     assert isinstance(data, list) and (len(data) == len(documents))
 
 
+def test_extract_docket_info(documents = TEST_DATA):
+    dockets = Dockets(documents)
+    data = (dockets._extract_field_info(doc) for doc in dockets.documents)
+    assert all((isinstance(d, str) or d is None) for d in data)
+
+
+def test_create_docket_key(documents = TEST_DATA):
+    dockets = Dockets(documents)
+    data = (dockets._create_value_key(doc, values="test") for doc in dockets.documents)
+    assert all((isinstance(d, dict) and d.get(dockets.value_key) == "test") for d in data)
+
+
+def test_process_docket_data(documents = TEST_DATA):
+    dockets = Dockets(documents)
+    data = dockets.process_data()
+    assert isinstance(data, list) and (len(data) == len(documents))
+
+
 test_dockets = (
+    test_extract_regsdotgov_info, 
+    test_create_regsdotgov_key, 
+    test_process_regsdotgov_data, 
     test_extract_docket_info, 
     test_create_docket_key, 
     test_process_docket_data, 
@@ -178,6 +200,11 @@ def test_process_documents_all(documents = TEST_DATA):
     assert isinstance(data, list) and (len(data) == len(documents))
 
 
+test_documents = (
+    test_process_documents_all, 
+)
+
+
 # preprocessing.agencies #
 
 
@@ -198,6 +225,13 @@ def test_agencies_transform():
             )
 
 
+# add: to_json, save_metadata, save_schema
+
+
+
+
+
+
 test_agencies = (
     test_agencies_get_metadata, 
     test_agencies_transform, 
@@ -211,7 +245,7 @@ all_tests = (
     + test_presidents 
     + test_rin
     + test_agencies
-    + (test_process_documents_all, )
+    + test_documents
     )
 
 
