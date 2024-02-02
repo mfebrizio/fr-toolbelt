@@ -1,5 +1,6 @@
-from pathlib import Path
+from datetime import date
 import json
+from pathlib import Path
 from pprint import pprint
 
 from requests import get
@@ -11,6 +12,11 @@ from fr_toolbelt.api_requests import (
 from fr_toolbelt.preprocessing import (
     AgencyMetadata, 
     AgencyData, 
+    extract_year, 
+    convert_to_datetime_date, 
+    date_in_quarter, 
+    greater_than_date, 
+    QUARTERS, 
     RegsDotGovData, 
     Dockets, 
     Presidents,
@@ -21,7 +27,6 @@ from fr_toolbelt.preprocessing import (
 
 # TEST OBJECTS AND UTILS #
 
-# url = "https://www.federalregister.gov/api/v1/documents.json?fields[]=abstract&fields[]=action&fields[]=agencies&fields[]=agency_names&fields[]=body_html_url&fields[]=cfr_references&fields[]=citation&fields[]=comment_url&fields[]=comments_close_on&fields[]=correction_of&fields[]=corrections&fields[]=dates&fields[]=disposition_notes&fields[]=docket_id&fields[]=docket_ids&fields[]=dockets&fields[]=document_number&fields[]=effective_on&fields[]=end_page&fields[]=excerpts&fields[]=executive_order_notes&fields[]=executive_order_number&fields[]=full_text_xml_url&fields[]=html_url&fields[]=images&fields[]=images_metadata&fields[]=json_url&fields[]=mods_url&fields[]=page_length&fields[]=page_views&fields[]=pdf_url&fields[]=president&fields[]=presidential_document_number&fields[]=proclamation_number&fields[]=public_inspection_pdf_url&fields[]=publication_date&fields[]=raw_text_url&fields[]=regulation_id_number_info&fields[]=regulation_id_numbers&fields[]=regulations_dot_gov_info&fields[]=regulations_dot_gov_url&fields[]=significant&fields[]=signing_date&fields[]=start_page&fields[]=subtype&fields[]=title&fields[]=toc_doc&fields[]=toc_subject&fields[]=topics&fields[]=type&fields[]=volume&per_page=20&order=oldest&conditions[publication_date][year]=2024"
 
 TESTS_PATH = Path(__file__).parent
 
@@ -71,13 +76,78 @@ def test_retrieve_results_by_next_page_partial(
     ):
     
     results = retrieve_results_by_next_page(endpoint_url, dict_params)
-    assert len(results) == 10000, f"Should return 10000; compare to API call: {TEST_URL_PARTIAL}"
+    assert len(results) == 10000, f"Should return 10,000; compare to API call: {TEST_URL_PARTIAL}"
 
 
 test_get_documents = (
     test_retrieve_results_by_next_page_full, 
     test_retrieve_results_by_next_page_partial, 
     )
+
+
+# preprocessing.agencies #
+
+
+def test_agencies_get_metadata():
+    agency_metadata = AgencyMetadata()
+    agency_metadata.get_metadata()
+    assert isinstance(agency_metadata.data, list)
+
+
+def test_agencies_transform():
+    agency_metadata = AgencyMetadata()
+    agency_metadata.get_metadata()
+    agency_metadata.transform()
+    assert len(agency_metadata.transformed_data) > 0
+    assert isinstance(agency_metadata.transformed_data, dict)
+
+
+# add: to_json, save_metadata, save_schema
+
+
+test_agencies = (
+    test_agencies_get_metadata, 
+    test_agencies_transform, 
+)
+
+
+# preprocessing.dates #
+
+def test_extract_year(input_success: dict = {"string": "2023-01-01", "year": 2023}, 
+                      input_fail: str = "01/01/2023"):
+    
+    year = extract_year(input_success.get("string"))
+    assert isinstance(year, int)
+    assert year == input_success.get("year")
+    
+    year_fail = extract_year(input_fail)
+    assert year_fail is None
+
+def test_convert_to_datetime_date(
+        success = ("2024-01-01", "20240101", "2024-W01-1", date(2024, 1, 1))
+    ):    
+    for attempt in success:
+        result = convert_to_datetime_date(attempt) 
+        assert isinstance(result, date)
+
+
+def test_date_in_quarter(schema = QUARTERS):
+    
+    attempt1, attempt2, year, quarter = date(2023, 1, 1), date(2023, 4, 1), "2023", "Q1"
+    
+    result = date_in_quarter(attempt1, year, quarter)
+    assert attempt1 == result
+    
+    result = date_in_quarter(attempt2, year, quarter)
+    assert attempt2 != result
+    assert result == schema.get(quarter)[1], "should return end of Q1"
+    
+    result = date_in_quarter(attempt2, year, quarter, return_quarter_end=False)
+    assert attempt2 != result
+    assert result == schema.get(quarter)[0], "should return beginning of Q1"
+
+
+# add: greater_than_date, 
 
 
 # preprocessing.dockets #
@@ -116,7 +186,8 @@ def test_create_docket_key(documents = TEST_DATA):
 def test_process_docket_data(documents = TEST_DATA):
     dockets = Dockets(documents)
     data = dockets.process_data()
-    assert isinstance(data, list) and (len(data) == len(documents))
+    assert isinstance(data, list)
+    assert len(data) == len(documents)
 
 
 test_dockets = (
@@ -141,14 +212,14 @@ def test_extract_president_info(documents = TEST_DATA):
 def test_create_president_key(documents = TEST_DATA):
     prez = Presidents(documents)
     data = (prez._create_value_key(doc, values="test") for doc in prez.documents)
-    #print([(isinstance(d, dict) and d.get("president_id")=="test") for d in data][0:20])
     assert all((isinstance(d, dict) and d.get(prez.value_key) == "test") for d in data)
 
 
 def test_process_president_data(documents = TEST_DATA):
     prez = Presidents(documents)
     data = prez.process_data()
-    assert isinstance(data, list) and (len(data) == len(documents))
+    assert isinstance(data, list)
+    assert len(data) == len(documents)
 
 
 test_presidents = (
@@ -182,7 +253,8 @@ def test_create_rin_key(documents = TEST_DATA):
 def test_process_rin_data(documents = TEST_DATA):
     rin = RegInfoData(documents)
     data = rin.process_data()
-    assert isinstance(data, list) and (len(data) == len(documents))
+    assert isinstance(data, list)
+    assert len(data) == len(documents)
 
 
 test_rin = (
@@ -197,7 +269,8 @@ test_rin = (
 
 def test_process_documents_all(documents = TEST_DATA):
     data = process_documents(documents)
-    assert isinstance(data, list) and (len(data) == len(documents))
+    assert isinstance(data, list)
+    assert len(data) == len(documents)
 
 
 test_documents = (
@@ -205,41 +278,10 @@ test_documents = (
 )
 
 
-# preprocessing.agencies #
-
-
-def test_agencies_get_metadata():
-    agency_metadata = AgencyMetadata()
-    agency_metadata.get_metadata()
-    assert isinstance(agency_metadata.data, list)
-
-
-def test_agencies_transform():
-    agency_metadata = AgencyMetadata()
-    agency_metadata.get_metadata()
-    agency_metadata.transform()
-    assert (
-        len(agency_metadata.transformed_data) > 0
-        ) and (
-            isinstance(agency_metadata.transformed_data, dict)
-            )
-
-
-# add: to_json, save_metadata, save_schema
-
-
-
-
-
-
-test_agencies = (
-    test_agencies_get_metadata, 
-    test_agencies_transform, 
-)
 
 
 # tuple of all tests #
-all_tests = (
+ALL_TESTS = (
     test_get_documents 
     + test_dockets 
     + test_presidents 
@@ -251,7 +293,7 @@ all_tests = (
 
 if __name__ == "__main__":
     
-    for func in all_tests:
+    for func in ALL_TESTS:
         func()
     
     print("Tests complete.")
