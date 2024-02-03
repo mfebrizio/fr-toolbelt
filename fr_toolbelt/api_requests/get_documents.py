@@ -9,7 +9,6 @@ import requests
 from .format_dates import DateFormatter
 
 from fr_toolbelt.preprocessing import (
-    DateFormatter, 
     identify_duplicates, 
     )
 

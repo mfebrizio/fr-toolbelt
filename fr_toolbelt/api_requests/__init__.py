@@ -9,7 +9,7 @@ __all__ = [
     ]
 
 
-from .format_dates import DateFormatter
+from .format_dates import DateFormatter, DateFormatError
 
 from .get_documents import *
 

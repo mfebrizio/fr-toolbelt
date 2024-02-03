@@ -6,17 +6,17 @@ from pprint import pprint
 from requests import get
 
 from fr_toolbelt.api_requests import (
+    DateFormatter, 
     retrieve_results_by_next_page, 
     )
 
 from fr_toolbelt.preprocessing import (
     AgencyMetadata, 
     AgencyData, 
-    extract_year, 
-    convert_to_datetime_date, 
-    date_in_quarter, 
-    greater_than_date, 
-    QUARTERS, 
+#    extract_year, 
+#    convert_to_datetime_date, 
+#    date_in_quarter, 
+#    greater_than_date, 
     RegsDotGovData, 
     Dockets, 
     Presidents,
@@ -56,6 +56,53 @@ TEST_COUNT_PARTIAL = TEST_RESPONSE_PARTIAL["count"]
 with open(TESTS_PATH / "test_documents.json", "r", encoding="utf-8") as f:
     TEST_DATA = json.load(f).get("results", [])
     
+
+# api_requests.format_dates #
+
+
+def test_extract_year(
+        input_success: dict = {"string": "2023-01-01", "year": 2023}, 
+        input_fail: str = "01/01/2023"
+    ):
+    
+    fdate = DateFormatter(input_success.get("string"))
+    year = fdate.get_year()
+    assert isinstance(year, int)
+    assert year == input_success.get("year")
+    
+    year_fail = DateFormatter(input_fail).get_year()
+    assert year_fail is None
+
+def test_convert_to_datetime_date(
+        success = ("2024-01-01", "20240101", "2024-W01-1", date(2024, 1, 1))
+    ):
+    
+    for attempt in success:
+        fdate = DateFormatter()
+        result = fdate.__convert_to_datetime_date(attempt) 
+        assert isinstance(result, date)
+
+
+def test_date_in_quarter():
+    
+    attempt1, attempt2, year, quarter = date(2023, 1, 1), date(2023, 4, 1), "2023", "Q1"
+    
+    fdate1 = DateFormatter(attempt1)
+    result = fdate1.date_in_quarter(year, quarter)
+    assert attempt1 == result
+    
+    fdate2 = DateFormatter(attempt2)
+    result = fdate2.date_in_quarter(year, quarter)
+    assert attempt2 != result
+    assert result == fdate2.quarter_schema.get(quarter)[1], "should return end of Q1"
+    
+    result = fdate2.date_in_quarter(year, quarter, return_quarter_end=False)
+    assert attempt2 != result
+    assert result == fdate2.quarter_schema.get(quarter)[0], "should return beginning of Q1"
+
+
+# add: greater_than_date, 
+
 
 # api_requests.get_documents #
 
@@ -111,43 +158,6 @@ test_agencies = (
 )
 
 
-# preprocessing.dates #
-
-def test_extract_year(input_success: dict = {"string": "2023-01-01", "year": 2023}, 
-                      input_fail: str = "01/01/2023"):
-    
-    year = extract_year(input_success.get("string"))
-    assert isinstance(year, int)
-    assert year == input_success.get("year")
-    
-    year_fail = extract_year(input_fail)
-    assert year_fail is None
-
-def test_convert_to_datetime_date(
-        success = ("2024-01-01", "20240101", "2024-W01-1", date(2024, 1, 1))
-    ):    
-    for attempt in success:
-        result = convert_to_datetime_date(attempt) 
-        assert isinstance(result, date)
-
-
-def test_date_in_quarter(schema = QUARTERS):
-    
-    attempt1, attempt2, year, quarter = date(2023, 1, 1), date(2023, 4, 1), "2023", "Q1"
-    
-    result = date_in_quarter(attempt1, year, quarter)
-    assert attempt1 == result
-    
-    result = date_in_quarter(attempt2, year, quarter)
-    assert attempt2 != result
-    assert result == schema.get(quarter)[1], "should return end of Q1"
-    
-    result = date_in_quarter(attempt2, year, quarter, return_quarter_end=False)
-    assert attempt2 != result
-    assert result == schema.get(quarter)[0], "should return beginning of Q1"
-
-
-# add: greater_than_date, 
 
 
 # preprocessing.dockets #

@@ -7,6 +7,7 @@ class DateFormatError(Exception):
 
 
 class DateFormatter:
+    
     def __init__(self, input_date: date | str) -> None:
         self.input_date = input_date
         self.formatted_date: date = self.__convert_to_datetime_date(input_date)
@@ -57,13 +58,13 @@ class DateFormatter:
         else:
             raise TypeError(f"Inappropriate argument type {type(self.input_date)} for parameter 'input_date'.")
 
-    def get_formatted_date(self):
+    def get_formatted_date(self) -> date:
         return self.formatted_date
     
     def get_year(self) -> int:
         return self.year
     
-    def date_in_quarter(self, check_year: str, check_quarter: str, return_quarter_end: bool = True):
+    def date_in_quarter(self, check_year: str, check_quarter: str, return_quarter_end: bool = True) -> date:
         """Checks if given date falls within a year's quarter. 
         Returns input date if True, otherwise returns first or last day of quarter.
 
@@ -94,7 +95,7 @@ class DateFormatter:
         else:
             raise DateFormatError
 
-    def greater_than_date(self, comparison_date: date | str, inclusive: bool = False):
+    def greater_than_date(self, comparison_date: date | str, inclusive: bool = False) -> bool:
         """Compare whether a formatted date occurs after a given comparison date.
 
         Args:
@@ -108,7 +109,7 @@ class DateFormatter:
         else:
             return self.formatted_date > self.__convert_to_datetime_date(comparison_date)
     
-    def less_than_date(self, comparison_date: date | str, inclusive: bool = False):
+    def less_than_date(self, comparison_date: date | str, inclusive: bool = False) -> bool:
         """Compare whether a formatted date occurs after a given comparison date.
 
         Args:
