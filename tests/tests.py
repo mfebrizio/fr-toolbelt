@@ -228,26 +228,28 @@ test_get_documents = (
 # preprocessing.agencies #
 
 
-def test_agencies_get_metadata():
+def test_agencies_init():
     agency_metadata = AgencyMetadata()
-    agency_metadata.get_metadata()
     assert isinstance(agency_metadata.data, list)
-
-
-def test_agencies_transform():
-    agency_metadata = AgencyMetadata()
-    agency_metadata.get_metadata()
-    agency_metadata.transform()
     assert len(agency_metadata.transformed_data) > 0
     assert isinstance(agency_metadata.transformed_data, dict)
+    assert len(agency_metadata.schema) > 0
+    assert isinstance(agency_metadata.schema, list)
+
+
+def test_agencies_get_metadata():
+    agency_metadata = AgencyMetadata()
+    metadata, schema = agency_metadata.get_agency_metadata()
+    assert isinstance(metadata, dict)
+    assert isinstance(schema, list)
 
 
 # add: to_json, save_metadata, save_schema
 
 
 test_agencies = (
+    test_agencies_init, 
     test_agencies_get_metadata, 
-    test_agencies_transform, 
 )
 
 
@@ -342,8 +344,6 @@ def test_extract_rin_info(documents = TEST_DATA):
 def test_create_rin_key(documents = TEST_DATA):
     rin = RegInfoData(documents)
     data = (rin._create_value_keys(doc, values=("test1", "test2")) for doc in rin.documents)
-    #pprint(rin.value_keys)
-    #pprint([d for d in data][0])
     assert all(
         isinstance(d, dict) 
         and (d.get(rin.value_keys[0]) == "test1") 
