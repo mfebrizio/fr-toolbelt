@@ -30,7 +30,7 @@ class RegsDotGovData(FieldData):
             values = [field_info.get(self.subfield_key)]
 
         if values is not None:
-            print(values)
+            #print(values)
             try_alt = all(("FRDOC" in v) for v in values if v is not None)
             if try_alt:
                 values = self._try_alt_key(document)
