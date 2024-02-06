@@ -1,8 +1,8 @@
 from datetime import date
 import json
 from pathlib import Path
+from types import GeneratorType
 
-from pandas import DataFrame
 import requests
 
 
@@ -150,93 +150,44 @@ class AgencyData:
         columns (list[str]): Columns containing agency information. Defaults to ["agencies", "agency_names"].
     """
     def __init__(
-            self, 
-            input_data: DataFrame, 
-            metadata: dict[dict], 
-            schema: list[str], 
-            columns: list[str] = ["agencies", "agency_names"]
+        self, 
+        metadata: dict[dict], 
+        schema: list[str], 
+        documents: list[dict], 
+        field_keys: tuple[str] = ("agencies", "agency_names")
         ) -> None:
-        self.data = input_data
-        metadata_results = metadata.get("results", None)
-        if metadata_results is not None:
-            self.metadata = metadata_results
-        else:
-            self.metadata = metadata
-        self.schema = schema
-        self.agency_columns = columns
-    
-    def extract_values(self):
-        """Extract values from agency columns, saving them as a `dict` to an instance attribute.
-        The format of the resulting key: value pairs will be "agency_column": list(values).
-        """        
-        values_dict = {}
-        for col in self.agency_columns:
-            values_dict.update({
-                col: list(self.data.loc[:, col].to_numpy())
-            })
-        self.agency_column_values = values_dict
-    
-    def get_slugs(self, alt_columns: list = None):
-        """Extract values of agency slugs that are de-duplicated and validated by Agency schema.
-        Assign list of values to column "agency_slugs" and instance attribute `self.agency_slug_values`.
-        
-        Args:
-            alt_columns (list, optional): List of alternate columns containing slug values. Defaults to None.
-        
-        Raises:
-            ValueError: If given, parameter "alt_columns" must have length of 2.
-        """
-        if (alt_columns is not None) and (len(alt_columns) == 2):
-            columns = alt_columns
-        elif alt_columns is None:
-            columns = self.agency_columns
-        else:
-            raise ValueError("Parameter alt_columns must have length of 2.")
-            
-        # loop over documents and extract agencies data
-        slug_list = []  # empty lists for results
-        for row, backup in zip(self.agency_column_values.get(columns[0]), self.agency_column_values.get(columns[1])):
-            slug_list.append(r.get("slug", r.get("name", f"{b}").lower().replace(" ","-")) for r, b in zip(row, backup))
+            self.documents = documents
+            self.field_keys = field_keys
+            metadata_results = metadata.get("results", None)
+            if metadata_results is not None:
+                self.metadata = metadata_results
+            else:
+                self.metadata = metadata
+            self.schema = {
+                "agencies": schema, 
+                "parents": self._get_parents(), 
+                "subagencies": self._get_subagencies(), 
+                }
 
-        # clean slug list to only include agencies in the schema
-        # there are some bad metadata -- e.g., 'interim-rule', 'formal-comments-that-were-received-in-response-to-the-nprm-regarding'
-        # also ensure no duplicate agencies in each document's list by using set()
-        slug_list_clean = [list(set(i for i in slug if i in self.schema)) for slug in slug_list]
-        
-        self.data.loc[:, "agency_slugs"] = slug_list_clean
-        self.agency_slug_values = slug_list_clean
-    
-    def get_parents(self) -> list[str]:
+    def _get_parents(self) -> list[str]:
         """Get top-level parent agency slugs from Agency metadata.
         Only includes agencies that have no parent themselves.
-
+        
         Returns:
             list[str]: List of agency slugs for top-level parent agencies.
         """
         return [k for k, v in self.metadata.items() if (v.get("parent_id") is None)]
     
-    def get_subagencies(self) -> list[str]:
+    def _get_subagencies(self) -> list[str]:
         """Get subagency slugs from Agency metadata.
         Includes agencies that have a parent agency, even if they are a parent themselves.
-
+        
         Returns:
             list[str]: List of agency slugs for subagencies.
-        """        
-        return [k for k, v in self.metadata.items() if (v.get("parent_id") is not None)]
-    
-    def get_agency_info(self, agency_slug: str, key: str) -> str | int | list | None:
-        """Retrieve value of "key" from metadata `dict` associated with "agency_slug".
-
-        Args:
-            agency_slug (str): Agency slug identifier.
-            key (str): Agency attributes associated with agency metadata (e.g., "name", "slug", "id", etc.).
-
-        Returns:
-            str | int | list | None: Value associated with "key" for given agency, else None.
         """
-        return self.metadata.get(agency_slug, {}).get(key, None)
-    
-    def return_values_as_str(self, input_values: list | tuple | set | int | float, sep: str = "; "):
+        return [k for k, v in self.metadata.items() if (v.get("parent_id") is not None)]
+
+    def _return_values_as_str(self, input_values: list | tuple | set | int | float, sep: str = "; "):
         """Return values as a string (e.g., ["a", "b", "c"] -> "a; b; c", 1.23 -> "1.23").
         Converts `list`, `tuple`, `set`, `int`, or `float` to `str`; otherwise returns value unaltered.
 
@@ -249,68 +200,113 @@ class AgencyData:
         """
         return [
             sep.join(document) 
-                if isinstance(document, (list, tuple, set)) else 
+                if isinstance(document, (list, tuple, set, GeneratorType)) else 
                     (f"{document}" if isinstance(document, (int, float)) else document) 
                         for document in input_values
             ]
     
-    def process_agency_columns(
+    def _get_agency_info(self, agency_slug: str, return_value_key: str) -> str | int | list | None:
+        """Retrieve value of "return_value_key" from metadata `dict` associated with "agency_slug".
+
+        Args:
+            agency_slug (str): Agency slug identifier.
+            return_value_key (str): Agency attributes associated with agency metadata (e.g., "name", "slug", "id", etc.).
+
+        Returns:
+            str | int | list | None: Value associated with "return_value_key" for given agency, else None.
+        """
+        return self.metadata.get(agency_slug, {}).get(return_value_key, None)
+    
+    def _extract_agency_slugs(self, document: dict):
+        
+        # clean slug list to only include agencies in the schema
+        # there are some bad metadata -- e.g., 'interim-rule', 'formal-comments-that-were-received-in-response-to-the-nprm-regarding'
+        # also ensure no duplicate agencies in each document's list by using set()
+        
+        agencies = document.get(self.field_keys[0], [])
+        agency_names = document.get(self.field_keys[1], [])
+        slugs = (agency_dict.get("slug", agency_dict.get("name", f"{agency_string}").lower().replace(" ","-")) for agency_dict, agency_string in zip(agencies, agency_names))
+        return list(set(slug for slug in slugs if slug in self.schema.get("agencies")))
+
+    def _extract_parents_subagencies(
             self, 
-            parent_slugs: list[str], 
-            subagency_slugs: list[str], 
-            return_format: str = "slug", 
-            return_columns_as_str: bool = True
+            document: dict, 
+            slug_key: str = "agency_slugs", 
+            return_format: str = None, 
+            return_values_as_str: bool = True, 
+            identify_ira: bool = True
         ):
         """Extract parent and subagency information from agency data and return in requested format based on API metadata.
         Supported return formats include "child_ids", "child_slugs", "description", "id", "name", "parent_id", "short_name", "slug", "url".
 
         Args:
-            parent_slugs (list[str]): List of slugs identifying parent agencies.
-            subagency_slugs (list[str]): List of slugs identifying subagencies.
             return_format (str, optional): Format of returned data (e.g., slug, numeric id, short name/acronym, name). Defaults to "slug".
-            return_columns_as_str (bool, optional): Return column values as a string. Defaults to True.
+            return_columns_as_str (bool, optional): Return values as a str; otherwise returns a list. Defaults to True.
         """
-        parents, subagencies = [], []
-        for document in self.agency_slug_values:
-            #parent_slug_uq = [slug for slug in document if slug in parent_slugs]
-            parents.append([self.get_agency_info(slug, return_format) for slug in document if slug in parent_slugs])
-            subagencies.append([self.get_agency_info(slug, return_format) for slug in document if slug in subagency_slugs])
-        if return_columns_as_str:
-            self.data.loc[:, f"parent_{return_format}"] = self.return_column_as_str(parents)
-            self.data.loc[:, f"subagency_{return_format}"] = self.return_column_as_str(subagencies)
+        if return_format is None:
+            return_format = "slug"
+        document_copy = document.copy()
+        slugs = document_copy.get(slug_key)
+        parents = (self._get_agency_info(slug, return_format) for slug in slugs if slug in self.schema.get("parents"))
+        subagencies = (self._get_agency_info(slug, return_format) for slug in slugs if slug in self.schema.get("subagencies"))
+        if identify_ira:
+            document_copy["independent_reg_agency"] = self._identify_independent_reg_agencies(slugs)
+        if return_values_as_str:
+            document_copy.update({
+                f"parent_{return_format}": self._return_values_as_str(parents), 
+                f"subagency_{return_format}": self._return_values_as_str(subagencies), 
+                })
         else:
-            self.data.loc[:, f"parent_{return_format}"] = parents
-            self.data.loc[:, f"subagency_{return_format}"] = subagencies
+            document_copy.update({
+                f"parent_{return_format}": list(parents), 
+                f"subagency_{return_format}": list(subagencies), 
+                })
+        return document_copy
     
-    def get_independent_reg_agencies(
+    def _identify_independent_reg_agencies(
             self, 
-            agency_column: str = "agency_slugs", 
-            new_column: str = "independent_reg_agency", 
-            independent_agencies: list | tuple = INDEPENDENT_REG_AGENCIES
+            slugs: list[str],
+            independent_agencies: list | tuple = INDEPENDENT_REG_AGENCIES, 
+            return_as_bool = True
         ):
-        """Identifies whether agency slugs include an independent regulatory agency, based on the definition in [44 U.S.C. 3502(5)](https://www.law.cornell.edu/uscode/text/44/3502).        
-        Creates a binary column in the instance attribute `self.data`.
+        """Identifies whether agency slugs include an independent regulatory agency, based on the definition in [44 U.S.C. 3502(5)](https://www.law.cornell.edu/uscode/text/44/3502).
         
         Args:
-            agency_column (str, optional): Column containing agency slug. Defaults to "agency_slugs".
             new_column (str, optional): Name of new column containing indicator for independent regulatory agencies. Defaults to "independent_reg_agency".
             independent_agencies (list | tuple, optional): Schema identifying independent regulatory agencies. Defaults to INDEPENDENT_REG_AGENCIES (constant).
         """
-        agencies = self.data.loc[:, agency_column].to_numpy()
-        ira_list = [any(1 if agency in independent_agencies else 0 for agency in agency_list) for agency_list in agencies]
-        self.data.loc[:, new_column] = [1 if ira else 0 for ira in ira_list]
+        ira = any(True if agency in independent_agencies else False for agency in slugs)
+        if return_as_bool:
+            return ira
+        else:
+            return 1 if ira else 0
+        
+    def _create_agency_slugs_key(self, document: dict, value_key: str = "agency_slugs", values: list = None) -> dict:
+
+        document_copy = document.copy()
+        
+        document_copy.update({
+            value_key: values, 
+            })
+        
+        return document_copy
     
-    def preprocess_agencies(self, return_format: str = "slug"):
-        """Preprocess agency metadata for analysis.
-        Calls methods `extract_values`, `get_slugs`, `process_agency_columns`, and `get_independent_reg_agencies`.
+    def process_data(self, return_format: str = None) -> list[dict]:
+        """_summary_
 
         Args:
-            return_format (str, optional): Format of returned data (e.g., slug, numeric id, short name/acronym, name). Defaults to "slug".
+            return_format (str, optional): _description_. Defaults to None.
+
+        Returns:
+            list[dict]: _description_
         """        
-        self.extract_values()
-        self.get_slugs()
-        self.process_agency_columns(self.get_parents(), self.get_subagencies(), return_format=return_format)
-        self.get_independent_reg_agencies()
+        return [
+            self._extract_parents_subagencies(
+                self._create_agency_slugs_key(doc, values=self._extract_agency_slugs(doc)), 
+                return_format=return_format
+                ) 
+            for doc in self.documents
+            ]
 
 
 # only query agencies endpoint when run as script; save that output 
