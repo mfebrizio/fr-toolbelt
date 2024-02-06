@@ -37,14 +37,17 @@ class AgencyMetadata:
         data (dict, optional): Accepts a JSON object of structure iterable[dict]. Defaults to None.
     """
     def __init__(self, data: list[dict] = None):
-        self.data = data
-        self.transformed_data = {}
-        self.schema = []
+        if data is not None:
+            self.data = data
+        else:
+            self.data = self._extract_metadata()
+        self.transformed_data = self._transform()
+        self.schema = self._extract_schema()
     
-    def get_metadata(
+    def _extract_metadata(
         self, 
         endpoint_url: str = r"https://www.federalregister.gov/api/v1/agencies.json"
-        ) -> None:
+        ) -> list[dict]:
         """Queries the GET agencies endpoint of the Federal Register API.
         Retrieve agencies metadata. After defining endpoint url, no parameters are needed.
 
@@ -60,9 +63,9 @@ class AgencyMetadata:
             print(agencies_response.reason)
             agencies_response.raise_for_status()
         # return response as json
-        self.data = agencies_response.json()
+        return agencies_response.json()
     
-    def get_schema(self, metadata: dict[dict] = None) -> None:
+    def _extract_schema(self, metadata: dict[dict] = None):
         """Get Agency schema of agencies available from API.
 
         Args:
@@ -72,25 +75,22 @@ class AgencyMetadata:
             schema = [f"{slug}" for slug in metadata.get("results", {}).keys()]
         else:
             schema = [f"{agency.get('slug')}" for agency in self.data if agency.get("slug", "") != ""]
-        self.schema = schema
+        return schema
     
-    def transform(self) -> None:
+    def _transform(self) -> dict[dict]:
         """Transform self.data from original format of list[dict] to dict[dict].
-        """        
-        if self.transformed_data != {}:
-            print("Metadata already transformed! Access it with self.transformed_data.")
-        else:
-            agency_dict = {}
-            for i in self.data:
-                if isinstance(i, dict):  # check if type is dict
-                    slug = f'{i.get("slug", "none")}'
-                    agency_dict.update({slug: i})                    
-                else:  # cannot use this method on non-dict structures
-                    continue
-            while "none" in agency_dict:
-                agency_dict.pop("none")
-            # return transformed data as a dictionary
-            self.transformed_data = agency_dict
+        """
+        agency_dict = {}
+        for i in self.data:
+            if isinstance(i, dict):  # check if type is dict
+                slug = f'{i.get("slug", "none")}'
+                agency_dict.update({slug: i})                    
+            else:  # cannot use this method on non-dict structures
+                continue
+        while "none" in agency_dict:
+            agency_dict.pop("none")
+        # return transformed data as a dictionary
+        return agency_dict
     
     def to_json(self, obj, path: Path, file_name: str):
         """Save object to JSON, creating path and parents if needed.
@@ -138,22 +138,30 @@ class AgencyMetadata:
         if (len(self.schema) == 0) and (self.data is not None):
             self.get_schema()
         self.to_json(self.schema, path, file_name)
+    
+    def get_agency_metadata(self):
+        """Retrieve metadata and schema from FR API GET/agencies endpoint.
 
+        Returns:
+            tuple: Transformed metadata (dict[dict]), agency schema (list[str])
+        """
+        return self.transformed_data, self.schema
+        
 
 class AgencyData:
     """Class for processing agency data from Federal Register API.
-    
+
     Args:
-        input_data (DataFrame): Input data with agency information.
-        metadata (dict[dict]): Transformed agency metadata.
-        schema (list[str]): List of agency slugs representing population of agencies. Defaults to Agency schema from API.
-        columns (list[str]): Columns containing agency information. Defaults to ["agencies", "agency_names"].
+        documents (list): Documents to be processed.
+        metadata (dict): Transformed agency metadata from FR API.
+        schema (list): Schema for valid agency slugs.
+        field_keys (tuple, optional): Fields containing agency information. Defaults to ("agencies", "agency_names").
     """
     def __init__(
         self, 
+        documents: list[dict], 
         metadata: dict[dict], 
         schema: list[str], 
-        documents: list[dict], 
         field_keys: tuple[str] = ("agencies", "agency_names")
         ) -> None:
             self.documents = documents
@@ -219,13 +227,14 @@ class AgencyData:
     
     def _extract_agency_slugs(self, document: dict):
         
-        # clean slug list to only include agencies in the schema
-        # there are some bad metadata -- e.g., 'interim-rule', 'formal-comments-that-were-received-in-response-to-the-nprm-regarding'
-        # also ensure no duplicate agencies in each document's list by using set()
-        
+        # 1) derive slugs from two fields
         agencies = document.get(self.field_keys[0], [])
         agency_names = document.get(self.field_keys[1], [])
         slugs = (agency_dict.get("slug", agency_dict.get("name", f"{agency_string}").lower().replace(" ","-")) for agency_dict, agency_string in zip(agencies, agency_names))
+        
+        # 2) clean slug list to only include agencies in the schema
+        # there are some bad metadata -- e.g., 'interim-rule', 'formal-comments-that-were-received-in-response-to-the-nprm-regarding'
+        # also ensure no duplicate agencies in each document's list by using set()
         return list(set(slug for slug in slugs if slug in self.schema.get("agencies")))
 
     def _extract_parents_subagencies(
@@ -291,7 +300,7 @@ class AgencyData:
         
         return document_copy
     
-    def process_data(self, return_format: str = None) -> list[dict]:
+    def process_agency_data(self, return_format: str = None) -> list[dict]:
         """_summary_
 
         Args:
@@ -315,12 +324,7 @@ if __name__ == "__main__":
     # set path
     data_dir = Path(__file__).parents[1].joinpath("data")
     
-    # retrieve metadata
+    # retrieve metadata and schema
     agencies_metadata = AgencyMetadata()
-    agencies_metadata.get_metadata()
-    agencies_metadata.transform()
     agencies_metadata.save_metadata(data_dir)
-    
-    # generate agency schema from metadata
-    agencies_metadata.get_schema()
     agencies_metadata.save_schema(data_dir)

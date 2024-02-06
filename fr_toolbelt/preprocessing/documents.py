@@ -1,4 +1,4 @@
-
+from .agencies import AgencyMetadata, AgencyData
 from .dockets import RegsDotGovData, Dockets
 from .presidents import Presidents
 from .rin import RegInfoData
@@ -16,6 +16,7 @@ def process_documents(documents: list[dict], which: str = "all", docket_data_sou
         }
     
     clean_fields = {
+        "agencies": AgencyData, 
         "dockets": source_dict.get(docket_data_source, Dockets), 
         "presidents": Presidents, 
         "rin": RegInfoData, 
@@ -23,8 +24,12 @@ def process_documents(documents: list[dict], which: str = "all", docket_data_sou
     
     if which == "all":
     
-        for v in clean_fields.values():
-            documents = v(documents).process_data()
+        for k, v in clean_fields.items():
+            if k == "agencies":
+                metadata, schema = AgencyMetadata().get_agency_metadata()
+                documents = v(documents, metadata, schema).process_agency_data()
+            else:
+                documents = v(documents).process_data()
     
     elif which in clean_fields.keys():
         documents = clean_fields[which](documents).process_data()
@@ -33,6 +38,3 @@ def process_documents(documents: list[dict], which: str = "all", docket_data_sou
         raise PreprocessingError
     
     return documents
-
-
-#class FedRegData(RegsDotGovData, ):
