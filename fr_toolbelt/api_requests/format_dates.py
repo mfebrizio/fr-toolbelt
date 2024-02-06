@@ -11,7 +11,7 @@ class DateFormatter:
     def __init__(self, input_date: date | str) -> None:
         self.input_date = input_date
         self.formatted_date: date = self.__convert_to_datetime_date(input_date)
-        self.year: int | None = self.__extract_year(self.formatted_date)
+        self.year: int | None = self.formatted_date.year
         self.quarter_schema = {
             "Q1": ("01-01", "03-31"), 
             "Q2": ("04-01", "06-30"), 
@@ -19,31 +19,29 @@ class DateFormatter:
             "Q4": ("10-01", "12-31"), 
             }
     
-    def __extract_year(self):
+    def __extract_year(self, input_date: str | date):
         """Extract year from a string in a format similar to `datetime.datetime` or `datetime.date`.
 
         Args:
-            string (str | date): Date represented as a string or `datetime.date` object.
-
+            alt_input_date (str | date): String of date.
+        
         Returns:
             int: Year attribute of `datetime.date` object.
         """
-        if isinstance(self.input_date, str):
-            res = re.compile(r"\d{4}-\d{2}-\d{2}", re.I).match(self.input_date)
+        if isinstance(input_date, str):
+            res = re.compile(r"\d{4}-\d{2}-\d{2}", re.I).match(input_date)
             if isinstance(res, re.Match):
                 year = date.fromisoformat(res[0]).year
-        elif isinstance(self.input_date, date):
-            year = self.input_date.year
+        elif isinstance(input_date, date):
+            year = input_date.year
         else:
             year = None
         
         return year
 
-    def __convert_to_datetime_date(self, date_to_convert: str | date) -> date:
-        """Converts string to `datetime.date` format. Returns input if already in proper format.
-
-        Args:
-            input_date (str | date): Input date in any valid ISO 8601 format (e.g., for Jan. 1, 2024 -> 2024-01-01, 20240101, 2024-W01-1).
+    def __convert_to_datetime_date(self, input_date: date | str) -> date:
+        """Converts `self.input_date` from `str` to `datetime.date`. Returns input if already in proper format.
+        Input string should be in any valid ISO 8601 format (e.g., for Jan. 1, 2024 -> 2024-01-01, 20240101, 2024-W01-1).
 
         Raises:
             TypeError: Inappropriate argument type for input_date parameter.
@@ -51,18 +49,31 @@ class DateFormatter:
         Returns:
             date: Date object.
         """    
-        if isinstance(self.input_date, date):
-            return date_to_convert
-        elif isinstance(self.input_date, str):
-            return date.fromisoformat(date_to_convert)
+        if isinstance(input_date, date):
+            return input_date
+        elif isinstance(input_date, str):
+            return date.fromisoformat(input_date)
         else:
-            raise TypeError(f"Inappropriate argument type {type(self.input_date)} for parameter 'input_date'.")
+            raise TypeError(f"Inappropriate argument type {type(input_date)} for parameter 'input_date'.")
 
     def get_formatted_date(self) -> date:
+        """Get `self.formatted_date` instance attribute.
+
+        Returns:
+            date: Formatted version of input date.
+        """
         return self.formatted_date
     
-    def get_year(self) -> int:
-        return self.year
+    def get_year(self, alt_input_date: str | date = None) -> int:
+        """Get `self.year` instance attribute
+
+        Returns:
+            int: Year of input date.
+        """
+        if alt_input_date is not None:
+            return self.__extract_year(input_date=alt_input_date)
+        else:
+            return self.year
     
     def date_in_quarter(self, check_year: str, check_quarter: str, return_quarter_end: bool = True) -> date:
         """Checks if given date falls within a year's quarter. 
@@ -81,7 +92,7 @@ class DateFormatter:
             datetime.date: Returns input_date when it falls within range; otherwise returns boundary date of quarter.
         """
         quarter_range = self.quarter_schema.get(f"{check_quarter}".upper())
-        check_date = self.__convert_to_datetime_date(self.formatted_date)
+        check_date = self.__convert_to_datetime_date(self.input_date)
         range_start = date.fromisoformat(f"{check_year}-{quarter_range[0]}")
         range_end = date.fromisoformat(f"{check_year}-{quarter_range[1]}")
         in_range = (check_date >= range_start) and (check_date <= range_end)
