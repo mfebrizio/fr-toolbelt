@@ -92,7 +92,7 @@ class AgencyMetadata:
         # return transformed data as a dictionary
         return agency_dict
     
-    def to_json(self, obj, path: Path, file_name: str):
+    def _to_json(self, obj, path: Path, file_name: str):
         """Save object to JSON, creating path and parents if needed.
 
         Args:
@@ -126,7 +126,7 @@ class AgencyMetadata:
             "results": self.transformed_data
             }
         # export to json
-        self.to_json(dict_metadata, path, file_name)
+        self._to_json(dict_metadata, path, file_name)
     
     def save_schema(self, path: Path, file_name: str = "agency_schema.json"):
         """Save schema of agencies available from API.
@@ -137,7 +137,7 @@ class AgencyMetadata:
         """        
         if (len(self.schema) == 0) and (self.data is not None):
             self.get_schema()
-        self.to_json(self.schema, path, file_name)
+        self._to_json(self.schema, path, file_name)
     
     def get_agency_metadata(self):
         """Retrieve metadata and schema from FR API GET/agencies endpoint.
@@ -249,8 +249,11 @@ class AgencyData:
         Supported return formats include "child_ids", "child_slugs", "description", "id", "name", "parent_id", "short_name", "slug", "url".
 
         Args:
-            return_format (str, optional): Format of returned data (e.g., slug, numeric id, short name/acronym, name). Defaults to "slug".
-            return_columns_as_str (bool, optional): Return values as a str; otherwise returns a list. Defaults to True.
+            document (dict): Federal Register document.
+            slug_key (str, optional): Dictionary key containing agency slugs. Defaults to "agency_slugs".
+            return_format (str, optional): Format of returned data (e.g., slug, numeric id, short name/acronym, name). Defaults to None.
+            return_values_as_str (bool, optional): Return values as a str; otherwise returns a list. Defaults to True.
+            identify_ira (bool, optional): Agency slugs contain an independent regulatory agency. Defaults to True.
         """
         if return_format is None:
             return_format = "slug"
@@ -301,14 +304,14 @@ class AgencyData:
         return document_copy
     
     def process_agency_data(self, return_format: str = None) -> list[dict]:
-        """_summary_
+        """Process agency data for each document.
 
         Args:
-            return_format (str, optional): _description_. Defaults to None.
+            return_format (str, optional): Format of returned data (e.g., slug, numeric id, short name/acronym, name). Defaults to None.
 
         Returns:
-            list[dict]: _description_
-        """        
+            list[dict]: List of processed documents.
+        """
         return [
             self._extract_parents_subagencies(
                 self._create_agency_slugs_key(doc, values=self._extract_agency_slugs(doc)), 
