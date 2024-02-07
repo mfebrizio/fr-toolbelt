@@ -4,24 +4,24 @@ Preprocessing Federal Register API results.
 
 __all__ = [
     "agencies", 
-    "dates", 
     "dockets", 
-    "duplicates", 
+    "documents", 
+    "fields", 
     "presidents", 
     "rin", 
     "utils", 
     ]
 
-from .agencies import *
+from .agencies import AgencyMetadata, AgencyData
 
-from .dates import *
+from .dockets import RegsDotGovData, Dockets
 
-from .dockets import *
+from .documents import process_documents
 
-from .duplicates import *
+from .fields import FieldData
 
-from .presidents import *
+from .presidents import Presidents
 
-from .rin import *
+from .rin import RegInfoData
 
 from .utils import *

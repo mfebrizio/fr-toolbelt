@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Mark Febrizio
-
-Created: 2023-12-21
-Last modified: 2023-12-21
-"""
 from collections import Counter
 
 
@@ -18,7 +11,7 @@ def identify_duplicates(results: list, key: str) -> list[dict]:
     Returns:
         list[dict]: Duplicated items from input list.
     """    
-    url_list = [r.get(key) for r in results]
+    url_list = (r.get(key) for r in results)
     c = Counter(url_list)
     dup_items = [r for r in results if r.get(key) in [k for k, v in c.items() if v > 1]]
     return dup_items
