@@ -37,20 +37,28 @@ def process_documents(documents: list[dict], which: str | list | tuple = "all", 
     
     if which == "all":
     
-        for k, v in clean_fields.items():
-            if k == "agencies":
+        for field, function in clean_fields.items():
+            if field == "agencies":
                 metadata, schema = AgencyMetadata().get_agency_metadata()
-                documents = v(documents, metadata, schema).process_data()
+                documents = function(documents, metadata, schema).process_data()
             else:
-                documents = v(documents).process_data()
+                documents = function(documents).process_data()
     
     elif isinstance(which, str) and (which in clean_fields.keys()):
-        documents = clean_fields[which](documents).process_data()
+        if which == "agencies":
+            metadata, schema = AgencyMetadata().get_agency_metadata()
+            documents = clean_fields[which](documents, metadata, schema).process_data()
+        else:
+            documents = clean_fields[which](documents).process_data()
     
     elif isinstance(which, (list, tuple)):
         valid_fields = (w for w in which if w in clean_fields.keys())
         for field in valid_fields:
-            documents = clean_fields[field](documents).process_data()
+            if field == "agencies":
+                metadata, schema = AgencyMetadata().get_agency_metadata()
+                documents = clean_fields[field](documents, metadata, schema).process_data()
+            else:
+                documents = clean_fields[field](documents).process_data()
     
     else:
         raise PreprocessingError
