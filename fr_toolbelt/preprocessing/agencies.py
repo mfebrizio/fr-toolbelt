@@ -303,7 +303,7 @@ class AgencyData:
         
         return document_copy
     
-    def process_agency_data(self, return_format: str = None) -> list[dict]:
+    def process_data(self, return_format: str = None) -> list[dict]:
         """Process agency data for each document.
 
         Args:

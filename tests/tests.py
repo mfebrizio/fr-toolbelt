@@ -286,7 +286,7 @@ def test_agencies_data_process(
         check_keys = ("agency_slugs", "parent_slug", "subagency_slug", "independent_reg_agency")
 ):
     agency_data = AgencyData(documents=documents, metadata=metadata, schema=schema)
-    processed = agency_data.process_agency_data()
+    processed = agency_data.process_data()
     assert isinstance(processed, list)
     assert len(processed) > 0
     for key in check_keys:
