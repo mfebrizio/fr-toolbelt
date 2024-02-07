@@ -8,6 +8,8 @@ from requests import get
 from fr_toolbelt.api_requests import (
     DateFormatter, 
     retrieve_results_by_next_page, 
+    get_documents_by_date, 
+    get_documents_by_number, 
     )
 
 from fr_toolbelt.preprocessing import (
@@ -220,9 +222,23 @@ def test_retrieve_results_by_next_page_partial(
     assert len(results) == 10000, f"Should return 10,000; compare to API call: {TEST_URL_PARTIAL}"
 
 
+def test_get_documents_by_date(start = "2024-01-01", end = "2024-01-31"):
+    results, count = get_documents_by_date(start, end)
+    assert isinstance(results, list)
+    assert count == len(results)
+
+
+def test_get_documents_by_number(numbers = ["2024-02204", "2023-28203", "2023-25797"]):
+    results, count = get_documents_by_number(numbers)
+    assert isinstance(results, list)
+    assert count == len(results)
+
+
 test_get_documents = (
     test_retrieve_results_by_next_page_full, 
     test_retrieve_results_by_next_page_partial, 
+    test_get_documents_by_date, 
+    test_get_documents_by_number, 
     )
 
 
