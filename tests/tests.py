@@ -305,8 +305,12 @@ def test_agencies_data_process(
     processed = agency_data.process_data()
     assert isinstance(processed, list)
     assert len(processed) > 0
+    processed_keys = set((k for d in processed for k in d))
     for key in check_keys:
-        assert key in set((k for d in processed for k in d)), f"Output missing {key=}"
+        assert key in processed_keys, f"Output missing {key=}"
+    for key in agency_data.field_keys:
+        assert key not in processed_keys, f"Failed to delete keys: {key=}"
+
 
 
 test_agencies = (
