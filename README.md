@@ -21,7 +21,7 @@ The `api_requests` module makes it easy to retrieve FR documents from the API by
 
 A simple request for documents published in January 2024 requires a start and end date and returns a tuple of the list of results and the count of retrieved documents.
 
-```{python}
+```python
 from fr_toolbelt.api_requests import get_documents_by_date
 
 start = "2024-01-01"
@@ -34,7 +34,7 @@ Note that this function works around the maximum of 10,000 results per search by
 
 To collect a particular set of documents, pass their document numbers as a parameter.
 
-```{python}
+```python
 from fr_toolbelt.api_requests import get_documents_by_number
 
 document_numbers = ["2024-02204", "2023-28203", "2023-25797"]
