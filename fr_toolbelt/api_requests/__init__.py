@@ -3,14 +3,14 @@ Making requests from the Federal Register API.
 """
 
 __all__ = [
-    "get_documents", 
+    "duplicates", 
     "format_dates", 
-    #"utils", 
+    "get_documents", 
     ]
 
+
+from .duplicates import *
 
 from .format_dates import DateFormatter, DateFormatError
 
 from .get_documents import *
-
-#from .utils import *

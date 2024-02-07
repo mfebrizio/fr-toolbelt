@@ -6,11 +6,8 @@ import re
 from pandas import DataFrame, read_csv, read_excel
 import requests
 
+from .duplicates import identify_duplicates
 from .format_dates import DateFormatter
-
-from fr_toolbelt.preprocessing import (
-    identify_duplicates, 
-    )
 
 
 BASE_PARAMS = {

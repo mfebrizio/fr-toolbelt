@@ -6,7 +6,7 @@ __all__ = [
     "agencies", 
     "dockets", 
     "documents", 
-    "duplicates", 
+    "fields", 
     "presidents", 
     "rin", 
     "utils", 
@@ -18,7 +18,7 @@ from .dockets import RegsDotGovData, Dockets
 
 from .documents import process_documents
 
-from .duplicates import *
+from .fields import FieldData
 
 from .presidents import Presidents
 
