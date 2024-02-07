@@ -303,6 +303,14 @@ class AgencyData:
         
         return document_copy
     
+    def _del_field_keys(self, document: dict):
+        document_copy = document.copy()
+        
+        for key in self.field_keys:
+            document_copy.pop(key, None)
+        
+        return document_copy
+    
     def process_data(self, return_format: str = None) -> list[dict]:
         """Process agency data for each document.
 
@@ -313,10 +321,12 @@ class AgencyData:
             list[dict]: List of processed documents.
         """
         return [
-            self._extract_parents_subagencies(
-                self._create_agency_slugs_key(doc, values=self._extract_agency_slugs(doc)), 
-                return_format=return_format
-                ) 
+            self._del_field_keys(
+                self._extract_parents_subagencies(
+                    self._create_agency_slugs_key(doc, values=self._extract_agency_slugs(doc)), 
+                    return_format=return_format
+                    )
+                )
             for doc in self.documents
             ]
 
