@@ -30,7 +30,18 @@ results, count = get_documents_by_date(start, end)
 
 ```
 
-Note that this function works around the maximum of 10,000 results per search by querying smaller subsets of documents and compiling them into a larger result set. So retrieving all [28,308 documents published in 2020](https://www.federalregister.gov/api/v1/documents.json?conditions[publication_date][year]=2020&per_page=1000) is now possible with a single function call.
+To deviate from the default set of fields, pass the fields parameter to the function call.
+
+```python
+
+start = "2024-01-01"
+end = "2024-01-31"
+fields = ["document_number", "publication_date", "raw_text_url"]
+results, count = get_documents_by_date(start, end, fields=fields)
+
+```
+
+More customization is possible by examining the parameters and docstrings. Note that this function works around the maximum of 10,000 results per search by querying smaller subsets of documents and compiling them into a larger result set. So retrieving all [28,308 documents published in 2020](https://www.federalregister.gov/api/v1/documents.json?conditions[publication_date][year]=2020&per_page=1000) is now possible with a single function call.
 
 To collect a particular set of documents, pass their document numbers as a parameter.
 
@@ -48,7 +59,9 @@ The `api_requests` module may add support for endpoints other than the documents
 
 ### Preprocessing module
 
-```{json}
+The `preprocessing` module handles common tasks to process the API data in a usable format. Below is an example of what the raw API data look like for a single document. Notice how fields like "agencies" and "regulation_id_number_info" are nested data structures that are difficult to use in their raw form.
+
+```json
 {'action': 'Proposed rule.',
  'agencies': [{'id': 54,
                'json_url': 'https://www.federalregister.gov/api/v1/agencies/54',
@@ -83,6 +96,63 @@ The `api_requests` module may add support for endpoints other than the documents
                                                       'Regulation',
                                              'xml_url': 'http://www.reginfo.gov/public/do/eAgendaViewRule?pubId=202310&RIN=0694-AJ15&operation=OPERATION_EXPORT_XML'}},
  'start_page': 8363,
+ 'title': 'Clarifications and Updates to Defense Priorities and Allocations '
+          'System Regulation',
+ 'type': 'Proposed Rule'}
+```
+
+```python
+from fr_toolbelt.preprocessing import AgencyMetadata, AgencyData
+
+# first we collect metadata for processing the agency information
+agency_metadata = AgencyMetadata()
+metadata, schema = agency_metadata.get_agency_metadata()
+
+# then we process the document using the AgencyData class
+agency_data = AgencyData(document, metadata, schema)
+processed_data = agency_data.process_data()
+```
+
+```json
+{'action': 'Proposed rule.',
+ 'agencies': [{'id': 54,
+               'json_url': 'https://www.federalregister.gov/api/v1/agencies/54',
+               'name': 'Commerce Department',
+               'parent_id': None,
+               'raw_name': 'DEPARTMENT OF COMMERCE',
+               'slug': 'commerce-department',
+               'url': 'https://www.federalregister.gov/agencies/commerce-department'},
+              {'id': 241,
+               'json_url': 'https://www.federalregister.gov/api/v1/agencies/241',
+               'name': 'Industry and Security Bureau',
+               'parent_id': 54,
+               'raw_name': 'Bureau of Industry and Security',
+               'slug': 'industry-and-security-bureau',
+               'url': 'https://www.federalregister.gov/agencies/industry-and-security-bureau'}],
+ 'agency_names': ['Commerce Department', 'Industry and Security Bureau'],
+ 'agency_slugs': ['commerce-department', 'industry-and-security-bureau'],
+ 'citation': '89 FR 8363',
+ 'correction_of': None,
+ 'docket_id': None,
+ 'document_number': '2024-01930',
+ 'end_page': 8377,
+ 'html_url': 'https://www.federalregister.gov/documents/2024/02/07/2024-01930/clarifications-and-updates-to-defense-priorities-and-allocations-system-regulation',
+ 'independent_reg_agency': False,
+ 'parent_slug': ['commerce-department'],
+ 'pdf_url': 'https://www.govinfo.gov/content/pkg/FR-2024-02-07/pdf/2024-01930.pdf',
+ 'publication_date': '2024-02-07',
+ 'regulation_id_number_info': {'0694-AJ15': {'html_url': 'https://www.federalregister.gov/regulations/0694-AJ15/clarifications-and-updates-to-defense-priorities-and-allocations-system-regulation',
+                                             'issue': '202310',
+                                             'priority_category': 'Substantive, '
+                                                                  'Nonsignificant',
+                                             'title': 'Clarifications and '
+                                                      'Updates to Defense '
+                                                      'Priorities and '
+                                                      'Allocations System '
+                                                      'Regulation',
+                                             'xml_url': 'http://www.reginfo.gov/public/do/eAgendaViewRule?pubId=202310&RIN=0694-AJ15&operation=OPERATION_EXPORT_XML'}},
+ 'start_page': 8363,
+ 'subagency_slug': ['industry-and-security-bureau'],
  'title': 'Clarifications and Updates to Defense Priorities and Allocations '
           'System Regulation',
  'type': 'Proposed Rule'}
