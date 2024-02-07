@@ -48,10 +48,11 @@ TEST_URL_PARTIAL = get(ENDPOINT_URL, TEST_PARAMS_PARTIAL).url
 TEST_RESPONSE_PARTIAL = get(ENDPOINT_URL, TEST_PARAMS_PARTIAL).json()
 TEST_COUNT_PARTIAL = TEST_RESPONSE_PARTIAL["count"]
 
-
 with open(TESTS_PATH / "test_documents.json", "r", encoding="utf-8") as f:
     TEST_DATA = json.load(f).get("results", [])
-    
+
+TEST_METADATA, TEST_SCHEMA = AgencyMetadata().get_agency_metadata()
+
 
 # api_requests.format_dates #
 
@@ -228,7 +229,7 @@ test_get_documents = (
 # preprocessing.agencies #
 
 
-def test_agencies_init():
+def test_agencies_metadata_init():
     agency_metadata = AgencyMetadata()
     assert isinstance(agency_metadata.data, list)
     assert len(agency_metadata.transformed_data) > 0
@@ -237,19 +238,68 @@ def test_agencies_init():
     assert isinstance(agency_metadata.schema, list)
 
 
-def test_agencies_get_metadata():
+def test_agencies_metadata_get():
     agency_metadata = AgencyMetadata()
     metadata, schema = agency_metadata.get_agency_metadata()
     assert isinstance(metadata, dict)
     assert isinstance(schema, list)
 
 
-# add: to_json, save_metadata, save_schema
+def test_agencies_metadata_save_metadata(path = TESTS_PATH, file_name: str = "test_metadata.json"):
+    test_path = path / file_name
+    assert not test_path.exists()
+    agency_metadata = AgencyMetadata()
+    agency_metadata.save_metadata(path, file_name=file_name)
+    assert test_path.is_file()
+    if test_path.is_file():
+        test_path.unlink()
+
+
+def test_agencies_metadata_save_schema(path = TESTS_PATH, file_name: str = "test_schema.json"):
+    test_path = path / file_name
+    assert not test_path.exists()
+    agency_metadata = AgencyMetadata()
+    agency_metadata.save_schema(path, file_name=file_name)
+    assert test_path.is_file()
+    if test_path.is_file():
+        test_path.unlink()
+
+
+def test_agencies_data_init(
+        documents = TEST_DATA, 
+        metadata = TEST_METADATA, 
+        schema = TEST_SCHEMA
+    ):
+    agency_data = AgencyData(documents=documents, metadata=metadata, schema=schema)
+    assert isinstance(agency_data.documents, list)
+    assert len(agency_data.documents) > 0
+    assert isinstance(agency_data.metadata, dict)
+    assert len(agency_data.metadata) > 0
+    assert isinstance(agency_data.schema, dict), f"schema should be type dict but it is type {type(agency_data.schema)}"
+    assert len(agency_data.schema) == 3
+
+
+def test_agencies_data_process(
+        documents = TEST_DATA, 
+        metadata = TEST_METADATA, 
+        schema = TEST_SCHEMA, 
+        check_keys = ("agency_slugs", "parent_slug", "subagency_slug", "independent_reg_agency")
+):
+    agency_data = AgencyData(documents=documents, metadata=metadata, schema=schema)
+    processed = agency_data.process_agency_data()
+    assert isinstance(processed, list)
+    assert len(processed) > 0
+    for key in check_keys:
+        assert key in set((k for d in processed for k in d)), f"Output missing {key=}"
 
 
 test_agencies = (
-    test_agencies_init, 
-    test_agencies_get_metadata, 
+    test_agencies_metadata_init, 
+    test_agencies_metadata_get, 
+    test_agencies_metadata_save_metadata, 
+    test_agencies_metadata_save_schema, 
+    test_agencies_data_init, 
+    test_agencies_data_process, 
 )
 
 
