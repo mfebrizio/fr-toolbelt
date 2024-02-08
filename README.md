@@ -119,7 +119,7 @@ processed_agencies = agency_data.process_data(return_format="name")
 
 Below, see how the illustrative document shown previously now contains new key: value pairs ("agency_slugs", "independent_reg_agency", "parent_name", "subagency_name") and removes the old ones ("agencies", "agency_names").
 
-```jsonl
+```JSON5
 {'agency_slugs': ['rural-business-cooperative-service',
                   'agriculture-department'],
  'docket_ids': ['DOCKET #: RBS-23-BUSINESS-0024'],
@@ -161,7 +161,7 @@ from fr_toolbelt.preprocessing import process_documents
 processed_docs = process_documents(results, del_keys=("type", "docket_ids"))
 ```
 
-```python
+```JSON5
 {'agency_slugs': ['rural-business-cooperative-service',
                   'agriculture-department'],
  'docket_id': 'RBS-23-BUSINESS-0024',
