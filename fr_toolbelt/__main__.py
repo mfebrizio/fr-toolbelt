@@ -3,7 +3,7 @@ if __name__ == "__main__":
     from pprint import pprint
 
     from fr_toolbelt.api_requests import (
-        get_documents_by_date, get_documents_by_number,     
+        get_documents_by_date, 
     )
 
     from fr_toolbelt.preprocessing import (
@@ -31,6 +31,7 @@ if __name__ == "__main__":
         "president", 
         ]
     results, count = get_documents_by_date(start, end, fields=fields)
+    print("\n\n-- RAW --\n")
     pprint(results[0])
     
     metadata, schema = AgencyMetadata().get_agency_metadata()
@@ -54,6 +55,6 @@ if __name__ == "__main__":
     print("\n\n-- RIN --\n")
     pprint(processed_rin[0])
     
-    #documents = process_documents(res)
-    #pprint(set((k for d in documents for k in d)))
-    #pprint(documents[0])
+    processed_docs = process_documents(results)
+    print("\n\n-- ALL --\n")
+    pprint(processed_docs[0])
