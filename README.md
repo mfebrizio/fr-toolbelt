@@ -61,7 +61,7 @@ The `api_requests` module may add support for endpoints other than the documents
 
 The `preprocessing` module handles common tasks to process the API data in a usable format. Below is an example of what the raw API data look like for a single illustrative document. Notice how fields like "agencies" and "regulation_id_number_info" are nested data structures that are difficult to use in their raw form.
 
-```json
+```JSON5
 {'agencies': [{'id': 12,
                'json_url': 'https://www.federalregister.gov/api/v1/agencies/12',
                'name': 'Agriculture Department',
@@ -119,7 +119,7 @@ processed_agencies = agency_data.process_data(return_format="name")
 
 Below, see how the illustrative document shown previously now contains new key: value pairs ("agency_slugs", "independent_reg_agency", "parent_name", "subagency_name") and removes the old ones ("agencies", "agency_names").
 
-```json
+```jsonl
 {'agency_slugs': ['rural-business-cooperative-service',
                   'agriculture-department'],
  'docket_ids': ['DOCKET #: RBS-23-BUSINESS-0024'],
@@ -161,7 +161,7 @@ from fr_toolbelt.preprocessing import process_documents
 processed_docs = process_documents(results, del_keys=("type", "docket_ids"))
 ```
 
-```json
+```python
 {'agency_slugs': ['rural-business-cooperative-service',
                   'agriculture-department'],
  'docket_id': 'RBS-23-BUSINESS-0024',
