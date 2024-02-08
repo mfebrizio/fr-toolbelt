@@ -1,6 +1,6 @@
 # fr-toolbelt
 
-Toolbelt of classes and functions written in Python to use with the Federal Register (FR) API.
+Toolbelt of classes and functions written in Python to use with the [Federal Register (FR) API](https://www.federalregister.gov/developers/documentation/api/v1).
 
 Name inspired by the [Requests Toolbelt](https://github.com/requests/toolbelt).
 
@@ -59,47 +59,51 @@ The `api_requests` module may add support for endpoints other than the documents
 
 ### Preprocessing module
 
-The `preprocessing` module handles common tasks to process the API data in a usable format. Below is an example of what the raw API data look like for a single document. Notice how fields like "agencies" and "regulation_id_number_info" are nested data structures that are difficult to use in their raw form.
+The `preprocessing` module handles common tasks to process the API data in a usable format. Below is an example of what the raw API data look like for a single illustrative document. Notice how fields like "agencies" and "regulation_id_number_info" are nested data structures that are difficult to use in their raw form.
 
 ```json
-{'action': 'Proposed rule.',
- 'agencies': [{'id': 54,
-               'json_url': 'https://www.federalregister.gov/api/v1/agencies/54',
-               'name': 'Commerce Department',
+{'agencies': [{'id': 12,
+               'json_url': 'https://www.federalregister.gov/api/v1/agencies/12',
+               'name': 'Agriculture Department',
                'parent_id': None,
-               'raw_name': 'DEPARTMENT OF COMMERCE',
-               'slug': 'commerce-department',
-               'url': 'https://www.federalregister.gov/agencies/commerce-department'},
-              {'id': 241,
-               'json_url': 'https://www.federalregister.gov/api/v1/agencies/241',
-               'name': 'Industry and Security Bureau',
-               'parent_id': 54,
-               'raw_name': 'Bureau of Industry and Security',
-               'slug': 'industry-and-security-bureau',
-               'url': 'https://www.federalregister.gov/agencies/industry-and-security-bureau'}],
- 'agency_names': ['Commerce Department', 'Industry and Security Bureau'],
- 'citation': '89 FR 8363',
- 'correction_of': None,
- 'document_number': '2024-01930',
- 'end_page': 8377,
- 'html_url': 'https://www.federalregister.gov/documents/2024/02/07/2024-01930/clarifications-and-updates-to-defense-priorities-and-allocations-system-regulation',
- 'pdf_url': 'https://www.govinfo.gov/content/pkg/FR-2024-02-07/pdf/2024-01930.pdf',
- 'publication_date': '2024-02-07',
- 'regulation_id_number_info': {'0694-AJ15': {'html_url': 'https://www.federalregister.gov/regulations/0694-AJ15/clarifications-and-updates-to-defense-priorities-and-allocations-system-regulation',
-                                             'issue': '202310',
-                                             'priority_category': 'Substantive, '
-                                                                  'Nonsignificant',
-                                             'title': 'Clarifications and '
-                                                      'Updates to Defense '
-                                                      'Priorities and '
-                                                      'Allocations System '
-                                                      'Regulation',
-                                             'xml_url': 'http://www.reginfo.gov/public/do/eAgendaViewRule?pubId=202310&RIN=0694-AJ15&operation=OPERATION_EXPORT_XML'}},
- 'start_page': 8363,
- 'title': 'Clarifications and Updates to Defense Priorities and Allocations '
-          'System Regulation',
- 'type': 'Proposed Rule'}
+               'raw_name': 'DEPARTMENT OF AGRICULTURE',
+               'slug': 'agriculture-department',
+               'url': 'https://www.federalregister.gov/agencies/agriculture-department'},
+              {'id': 456,
+               'json_url': 'https://www.federalregister.gov/api/v1/agencies/456',
+               'name': 'Rural Business-Cooperative Service',
+               'parent_id': 12,
+               'raw_name': 'Rural Business-Cooperative Service',
+               'slug': 'rural-business-cooperative-service',
+               'url': 'https://www.federalregister.gov/agencies/rural-business-cooperative-service'}],
+ 'agency_names': ['Agriculture Department',
+                  'Rural Business-Cooperative Service'],
+ 'docket_ids': ['DOCKET #: RBS-23-BUSINESS-0024'],
+ 'dockets': [{'agency_name': 'RBS',
+              'documents': [{'allow_late_comments': None,
+                             'comment_count': 1,
+                             'comment_end_date': '2024-04-02',
+                             'comment_start_date': '2024-01-02',
+                             'comment_url': 'https://www.regulations.gov/commenton/RBS-23-BUSINESS-0024-0001',
+                             'id': 'RBS-23-BUSINESS-0024-0001',
+                             'regulations_dot_gov_open_for_comment': True,
+                             'updated_at': '2024-01-22T00:04:26.978-05:00'}],
+              'id': 'RBS-23-BUSINESS-0024',
+              'supporting_documents': [],
+              'supporting_documents_count': 0,
+              'title': 'Notice of Funding Opportunity for the Rural Innovation '
+                       'Stronger Economy (RISE) Grant Program for Fiscal Year '
+                       '2024'}],
+ 'document_number': '2023-26792',
+ 'president': {'identifier': 'joe-biden', 'name': 'Joseph R. Biden Jr.'},
+ 'publication_date': '2024-01-02',
+ 'regulation_id_number_info': {},
+ 'title': 'Notice of Solicitation of Applications for the Rural Innovation '
+          'Stronger Economy (RISE) Grant Program for Fiscal Year 2024',
+ 'type': 'Notice'}
 ```
+
+To preprocess the agency information in a set of documents, we would use the `AgencyMetadata` class to retrieve agency metadata from the API and then process the documents with the `AgencyData` class.
 
 ```python
 from fr_toolbelt.preprocessing import AgencyMetadata, AgencyData
@@ -108,52 +112,67 @@ from fr_toolbelt.preprocessing import AgencyMetadata, AgencyData
 agency_metadata = AgencyMetadata()
 metadata, schema = agency_metadata.get_agency_metadata()
 
-# then we process the document using the AgencyData class
-agency_data = AgencyData(document, metadata, schema)
-processed_data = agency_data.process_data()
+# then we process the documents using the AgencyData class
+agency_data = AgencyData(results, metadata, schema)
+processed_agencies = agency_data.process_data(return_format="name")
+```
+
+Below, see how the illustrative document shown previously now contains new key: value pairs ("agency_slugs", "independent_reg_agency", "parent_name", "subagency_name") and removes the old ones ("agencies", "agency_names").
+
+```json
+{'agency_slugs': ['rural-business-cooperative-service',
+                  'agriculture-department'],
+ 'docket_ids': ['DOCKET #: RBS-23-BUSINESS-0024'],
+ 'dockets': [{'agency_name': 'RBS',
+              'documents': [{'allow_late_comments': None,
+                             'comment_count': 1,
+                             'comment_end_date': '2024-04-02',
+                             'comment_start_date': '2024-01-02',
+                             'comment_url': 'https://www.regulations.gov/commenton/RBS-23-BUSINESS-0024-0001',
+                             'id': 'RBS-23-BUSINESS-0024-0001',
+                             'regulations_dot_gov_open_for_comment': True,
+                             'updated_at': '2024-01-22T00:04:26.978-05:00'}],
+              'id': 'RBS-23-BUSINESS-0024',
+              'supporting_documents': [],
+              'supporting_documents_count': 0,
+              'title': 'Notice of Funding Opportunity for the Rural Innovation '
+                       'Stronger Economy (RISE) Grant Program for Fiscal Year '
+                       '2024'}],
+ 'document_number': '2023-26792',
+ 'independent_reg_agency': False,
+ 'parent_name': 'Agriculture Department',
+ 'president': {'identifier': 'joe-biden', 'name': 'Joseph R. Biden Jr.'},
+ 'publication_date': '2024-01-02',
+ 'regulation_id_number_info': {},
+ 'subagency_name': 'Rural Business-Cooperative Service',
+ 'title': 'Notice of Solicitation of Applications for the Rural Innovation '
+          'Stronger Economy (RISE) Grant Program for Fiscal Year 2024',
+ 'type': 'Notice'}
+```
+
+A similar series of commands accomplishes data processing for other fields. Classes are available for preprocessing "president" (`Presidents`), "regulation_id_number_info" (`RegInfoData`), and fields related to public commenting dockets (`Dockets` and `RegDotGovData`).
+
+Alternatively, the `process_documents` function provides a simpler interface for combining these functionalities together.
+
+```python
+from fr_toolbelt.preprocessing import process_documents
+
+# passing the del_keys parameter deletes those keys from the resulting dict
+processed_docs = process_documents(results, del_keys=("type", "docket_ids"))
 ```
 
 ```json
-{'action': 'Proposed rule.',
- 'agencies': [{'id': 54,
-               'json_url': 'https://www.federalregister.gov/api/v1/agencies/54',
-               'name': 'Commerce Department',
-               'parent_id': None,
-               'raw_name': 'DEPARTMENT OF COMMERCE',
-               'slug': 'commerce-department',
-               'url': 'https://www.federalregister.gov/agencies/commerce-department'},
-              {'id': 241,
-               'json_url': 'https://www.federalregister.gov/api/v1/agencies/241',
-               'name': 'Industry and Security Bureau',
-               'parent_id': 54,
-               'raw_name': 'Bureau of Industry and Security',
-               'slug': 'industry-and-security-bureau',
-               'url': 'https://www.federalregister.gov/agencies/industry-and-security-bureau'}],
- 'agency_names': ['Commerce Department', 'Industry and Security Bureau'],
- 'agency_slugs': ['commerce-department', 'industry-and-security-bureau'],
- 'citation': '89 FR 8363',
- 'correction_of': None,
- 'docket_id': None,
- 'document_number': '2024-01930',
- 'end_page': 8377,
- 'html_url': 'https://www.federalregister.gov/documents/2024/02/07/2024-01930/clarifications-and-updates-to-defense-priorities-and-allocations-system-regulation',
+{'agency_slugs': ['rural-business-cooperative-service',
+                  'agriculture-department'],
+ 'docket_id': 'RBS-23-BUSINESS-0024',
+ 'document_number': '2023-26792',
  'independent_reg_agency': False,
- 'parent_slug': ['commerce-department'],
- 'pdf_url': 'https://www.govinfo.gov/content/pkg/FR-2024-02-07/pdf/2024-01930.pdf',
- 'publication_date': '2024-02-07',
- 'regulation_id_number_info': {'0694-AJ15': {'html_url': 'https://www.federalregister.gov/regulations/0694-AJ15/clarifications-and-updates-to-defense-priorities-and-allocations-system-regulation',
-                                             'issue': '202310',
-                                             'priority_category': 'Substantive, '
-                                                                  'Nonsignificant',
-                                             'title': 'Clarifications and '
-                                                      'Updates to Defense '
-                                                      'Priorities and '
-                                                      'Allocations System '
-                                                      'Regulation',
-                                             'xml_url': 'http://www.reginfo.gov/public/do/eAgendaViewRule?pubId=202310&RIN=0694-AJ15&operation=OPERATION_EXPORT_XML'}},
- 'start_page': 8363,
- 'subagency_slug': ['industry-and-security-bureau'],
- 'title': 'Clarifications and Updates to Defense Priorities and Allocations '
-          'System Regulation',
- 'type': 'Proposed Rule'}
+ 'parent_slug': 'agriculture-department',
+ 'president_id': 'joe-biden',
+ 'publication_date': '2024-01-02',
+ 'rin': None,
+ 'rin_priority': None,
+ 'subagency_slug': 'rural-business-cooperative-service',
+ 'title': 'Notice of Solicitation of Applications for the Rural Innovation '
+          'Stronger Economy (RISE) Grant Program for Fiscal Year 2024'}
 ```
