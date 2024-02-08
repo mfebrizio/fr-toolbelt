@@ -8,8 +8,13 @@ class PreprocessingError:
     pass
 
 
-def process_documents(documents: list[dict], which: str | list | tuple = "all", docket_data_source: str = "dockets"):
-    """_summary_
+def process_documents(
+        documents: list[dict], 
+        which: str | list | tuple = "all", 
+        docket_data_source: str = "dockets", 
+        del_keys: str | list | tuple = None
+    ):
+    """Process one or more fields in each document.
 
     Args:
         documents (list[dict]): Documents to process.
@@ -63,4 +68,7 @@ def process_documents(documents: list[dict], which: str | list | tuple = "all", 
     else:
         raise PreprocessingError
     
-    return documents
+    if del_keys is not None:
+        return [{k: v for k, v in doc.items() if ((k != del_keys) and (k not in del_keys))} for doc in documents]
+    else:
+        return documents

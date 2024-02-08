@@ -41,7 +41,7 @@ if __name__ == "__main__":
     pprint(processed_agencies[0])
     
     dockets = Dockets(processed_agencies)
-    processed_dockets = dockets.process_data()
+    processed_dockets = dockets.process_data(del_keys="docket_ids")
     print("\n\n-- DOCKETS --\n")
     pprint(processed_dockets[0])
     
@@ -57,4 +57,12 @@ if __name__ == "__main__":
     
     processed_docs = process_documents(results)
     print("\n\n-- ALL --\n")
+    pprint(processed_docs[0])
+
+    processed_docs = process_documents(results, del_keys="type")
+    print("\n\n-- ALL (del 1 key) --\n")
+    pprint(processed_docs[0])
+
+    processed_docs = process_documents(results, del_keys=("type", "docket_ids"))
+    print("\n\n-- ALL (del 2 keys) --\n")
     pprint(processed_docs[0])
