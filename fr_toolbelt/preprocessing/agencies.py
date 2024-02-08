@@ -206,12 +206,13 @@ class AgencyData:
         Returns:
             list[str]: List of converted values for assigning to DataFrame series.
         """
-        return [
-            sep.join(document) 
-                if isinstance(document, (list, tuple, set, GeneratorType)) else 
-                    (f"{document}" if isinstance(document, (int, float)) else document) 
-                        for document in input_values
-            ]
+        if isinstance(input_values, (list, tuple, set, GeneratorType)):
+            return_value = sep.join(input_values)
+        elif isinstance(input_values, (int, float)):
+            return_value = f"{input_values}"
+        else:
+            return_value = input_values
+        return return_value
     
     def _get_agency_info(self, agency_slug: str, return_value_key: str) -> str | int | list | None:
         """Retrieve value of "return_value_key" from metadata `dict` associated with "agency_slug".
@@ -311,7 +312,12 @@ class AgencyData:
         
         return document_copy
     
-    def process_data(self, return_format: str = None) -> list[dict]:
+    def process_data(
+            self, 
+            return_format: str = None, 
+            return_values_as_str: bool = True, 
+            identify_ira: bool = True
+        ) -> list[dict]:
         """Process agency data for each document.
 
         Args:
@@ -324,7 +330,9 @@ class AgencyData:
             self._del_field_keys(
                 self._extract_parents_subagencies(
                     self._create_agency_slugs_key(doc, values=self._extract_agency_slugs(doc)), 
-                    return_format=return_format
+                    return_format=return_format, 
+                    return_values_as_str=return_values_as_str, 
+                    identify_ira=identify_ira
                     )
                 )
             for doc in self.documents
