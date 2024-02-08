@@ -36,7 +36,7 @@ if __name__ == "__main__":
     
     metadata, schema = AgencyMetadata().get_agency_metadata()
     agency_data = AgencyData(results, metadata, schema)
-    processed_agencies = agency_data.process_data()
+    processed_agencies = agency_data.process_data(return_format="name")
     print("\n\n-- AGENCIES --\n")
     pprint(processed_agencies[0])
     
@@ -63,6 +63,6 @@ if __name__ == "__main__":
     print("\n\n-- ALL (del 1 key) --\n")
     pprint(processed_docs[0])
 
-    processed_docs = process_documents(results, del_keys=("type", "docket_ids"))
+    processed_docs = process_documents(results, del_keys=("type", "docket_ids"), return_values_as_str=False, identify_ira=False)
     print("\n\n-- ALL (del 2 keys) --\n")
     pprint(processed_docs[0])
