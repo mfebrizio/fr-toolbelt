@@ -12,7 +12,8 @@ def process_documents(
         documents: list[dict], 
         which: str | list | tuple = "all", 
         docket_data_source: str = "dockets", 
-        del_keys: str | list | tuple = None
+        del_keys: str | list | tuple = None, 
+        **kwargs
     ):
     """Process one or more fields in each document.
 
@@ -45,14 +46,14 @@ def process_documents(
         for field, function in clean_fields.items():
             if field == "agencies":
                 metadata, schema = AgencyMetadata().get_agency_metadata()
-                documents = function(documents, metadata, schema).process_data()
+                documents = function(documents, metadata, schema).process_data(**kwargs)
             else:
                 documents = function(documents).process_data()
     
     elif isinstance(which, str) and (which in clean_fields.keys()):
         if which == "agencies":
             metadata, schema = AgencyMetadata().get_agency_metadata()
-            documents = clean_fields[which](documents, metadata, schema).process_data()
+            documents = clean_fields[which](documents, metadata, schema).process_data(**kwargs)
         else:
             documents = clean_fields[which](documents).process_data()
     
@@ -61,7 +62,7 @@ def process_documents(
         for field in valid_fields:
             if field == "agencies":
                 metadata, schema = AgencyMetadata().get_agency_metadata()
-                documents = clean_fields[field](documents, metadata, schema).process_data()
+                documents = clean_fields[field](documents, metadata, schema).process_data(**kwargs)
             else:
                 documents = clean_fields[field](documents).process_data()
     
