@@ -8,7 +8,7 @@ Name inspired by the [Requests Toolbelt](https://github.com/requests/toolbelt).
 
 Install using pip:
 
-```sh
+```bash
 pip install git+https://github.com/regulatorystudies/fr-toolbelt.git
 ```
 
