@@ -1,3 +1,9 @@
+"""
+fr-toolbelt
+
+Toolbelt of classes and functions written in Python to use with the Federal Register (FR) API.
+"""
+
 from fr_toolbelt import api_requests
 from fr_toolbelt import preprocessing
 

@@ -40,13 +40,13 @@ class AgencyMetadata:
         if data is not None:
             self.data = data
         else:
-            self.data = self._extract_metadata()
-        self.transformed_data = self._transform()
-        self.schema = self._extract_schema()
+            self.data = self.__extract_metadata()
+        self.transformed_data = self.__transform()
+        self.schema = self.__extract_schema()
     
-    def _extract_metadata(
-        self, 
-        endpoint_url: str = r"https://www.federalregister.gov/api/v1/agencies.json"
+    def __extract_metadata(
+            self, 
+            endpoint_url: str = r"https://www.federalregister.gov/api/v1/agencies.json"
         ) -> list[dict]:
         """Queries the GET agencies endpoint of the Federal Register API.
         Retrieve agencies metadata. After defining endpoint url, no parameters are needed.
@@ -65,7 +65,7 @@ class AgencyMetadata:
         # return response as json
         return agencies_response.json()
     
-    def _extract_schema(self, metadata: dict[dict] = None):
+    def __extract_schema(self, metadata: dict[dict] = None):
         """Get Agency schema of agencies available from API.
 
         Args:
@@ -77,7 +77,7 @@ class AgencyMetadata:
             schema = [f"{agency.get('slug')}" for agency in self.data if agency.get("slug", "") != ""]
         return schema
     
-    def _transform(self) -> dict[dict]:
+    def __transform(self) -> dict[dict]:
         """Transform self.data from original format of list[dict] to dict[dict].
         """
         agency_dict = {}
@@ -92,7 +92,7 @@ class AgencyMetadata:
         # return transformed data as a dictionary
         return agency_dict
     
-    def _to_json(self, obj, path: Path, file_name: str):
+    def __to_json(self, obj, path: Path, file_name: str):
         """Save object to JSON, creating path and parents if needed.
 
         Args:
@@ -126,7 +126,7 @@ class AgencyMetadata:
             "results": self.transformed_data
             }
         # export to json
-        self._to_json(dict_metadata, path, file_name)
+        self.__to_json(dict_metadata, path, file_name)
     
     def save_schema(self, path: Path, file_name: str = "agency_schema.json"):
         """Save schema of agencies available from API.
@@ -137,7 +137,7 @@ class AgencyMetadata:
         """        
         if (len(self.schema) == 0) and (self.data is not None):
             self.get_schema()
-        self._to_json(self.schema, path, file_name)
+        self.__to_json(self.schema, path, file_name)
     
     def get_agency_metadata(self):
         """Retrieve metadata and schema from FR API GET/agencies endpoint.
@@ -158,11 +158,11 @@ class AgencyData:
         field_keys (tuple, optional): Fields containing agency information. Defaults to ("agencies", "agency_names").
     """
     def __init__(
-        self, 
-        documents: list[dict], 
-        metadata: dict[dict], 
-        schema: list[str], 
-        field_keys: tuple[str] = ("agencies", "agency_names")
+            self, 
+            documents: list[dict], 
+            metadata: dict[dict], 
+            schema: list[str], 
+            field_keys: tuple[str] = ("agencies", "agency_names")
         ) -> None:
             self.documents = documents
             self.field_keys = field_keys
@@ -173,11 +173,11 @@ class AgencyData:
                 self.metadata = metadata
             self.schema = {
                 "agencies": schema, 
-                "parents": self._get_parents(), 
-                "subagencies": self._get_subagencies(), 
+                "parents": self.__get_parents(), 
+                "subagencies": self.__get_subagencies(), 
                 }
 
-    def _get_parents(self) -> list[str]:
+    def __get_parents(self) -> list[str]:
         """Get top-level parent agency slugs from Agency metadata.
         Only includes agencies that have no parent themselves.
         
@@ -186,7 +186,7 @@ class AgencyData:
         """
         return [k for k, v in self.metadata.items() if (v.get("parent_id") is None)]
     
-    def _get_subagencies(self) -> list[str]:
+    def __get_subagencies(self) -> list[str]:
         """Get subagency slugs from Agency metadata.
         Includes agencies that have a parent agency, even if they are a parent themselves.
         
@@ -195,7 +195,7 @@ class AgencyData:
         """
         return [k for k, v in self.metadata.items() if (v.get("parent_id") is not None)]
 
-    def _return_values_as_str(self, input_values: list | tuple | set | int | float, sep: str = "; "):
+    def __return_values_as_str(self, input_values: list | tuple | set | int | float, sep: str = "; "):
         """Return values as a string (e.g., ["a", "b", "c"] -> "a; b; c", 1.23 -> "1.23").
         Converts `list`, `tuple`, `set`, `int`, or `float` to `str`; otherwise returns value unaltered.
 
@@ -206,14 +206,15 @@ class AgencyData:
         Returns:
             list[str]: List of converted values for assigning to DataFrame series.
         """
-        return [
-            sep.join(document) 
-                if isinstance(document, (list, tuple, set, GeneratorType)) else 
-                    (f"{document}" if isinstance(document, (int, float)) else document) 
-                        for document in input_values
-            ]
+        if isinstance(input_values, (list, tuple, set, GeneratorType)):
+            return_value = sep.join(input_values)
+        elif isinstance(input_values, (int, float)):
+            return_value = f"{input_values}"
+        else:
+            return_value = input_values
+        return return_value
     
-    def _get_agency_info(self, agency_slug: str, return_value_key: str) -> str | int | list | None:
+    def __get_agency_info(self, agency_slug: str, return_value_key: str) -> str | int | list | None:
         """Retrieve value of "return_value_key" from metadata `dict` associated with "agency_slug".
 
         Args:
@@ -225,19 +226,24 @@ class AgencyData:
         """
         return self.metadata.get(agency_slug, {}).get(return_value_key, None)
     
-    def _extract_agency_slugs(self, document: dict):
+    def __extract_agency_slugs(self, document: dict):
         
         # 1) derive slugs from two fields
         agencies = document.get(self.field_keys[0], [])
         agency_names = document.get(self.field_keys[1], [])
-        slugs = (agency_dict.get("slug", agency_dict.get("name", f"{agency_string}").lower().replace(" ","-")) for agency_dict, agency_string in zip(agencies, agency_names))
+        slugs = (
+            agency_dict.get(
+                "slug", agency_dict.get(
+                    "name", f"{agency_string}").lower().replace(" ","-")
+                ) for agency_dict, agency_string in zip(agencies, agency_names)
+            )
         
         # 2) clean slug list to only include agencies in the schema
         # there are some bad metadata -- e.g., 'interim-rule', 'formal-comments-that-were-received-in-response-to-the-nprm-regarding'
         # also ensure no duplicate agencies in each document's list by using set()
         return list(set(slug for slug in slugs if slug in self.schema.get("agencies")))
 
-    def _extract_parents_subagencies(
+    def __extract_parents_subagencies(
             self, 
             document: dict, 
             slug_key: str = "agency_slugs", 
@@ -259,14 +265,14 @@ class AgencyData:
             return_format = "slug"
         document_copy = document.copy()
         slugs = document_copy.get(slug_key)
-        parents = (self._get_agency_info(slug, return_format) for slug in slugs if slug in self.schema.get("parents"))
-        subagencies = (self._get_agency_info(slug, return_format) for slug in slugs if slug in self.schema.get("subagencies"))
+        parents = (self.__get_agency_info(slug, return_format) for slug in slugs if slug in self.schema.get("parents"))
+        subagencies = (self.__get_agency_info(slug, return_format) for slug in slugs if slug in self.schema.get("subagencies"))
         if identify_ira:
-            document_copy["independent_reg_agency"] = self._identify_independent_reg_agencies(slugs)
+            document_copy["independent_reg_agency"] = self.__identify_independent_reg_agencies(slugs)
         if return_values_as_str:
             document_copy.update({
-                f"parent_{return_format}": self._return_values_as_str(parents), 
-                f"subagency_{return_format}": self._return_values_as_str(subagencies), 
+                f"parent_{return_format}": self.__return_values_as_str(parents), 
+                f"subagency_{return_format}": self.__return_values_as_str(subagencies), 
                 })
         else:
             document_copy.update({
@@ -275,7 +281,7 @@ class AgencyData:
                 })
         return document_copy
     
-    def _identify_independent_reg_agencies(
+    def __identify_independent_reg_agencies(
             self, 
             slugs: list[str],
             independent_agencies: list | tuple = INDEPENDENT_REG_AGENCIES, 
@@ -293,8 +299,12 @@ class AgencyData:
         else:
             return 1 if ira else 0
         
-    def _create_agency_slugs_key(self, document: dict, value_key: str = "agency_slugs", values: list = None) -> dict:
-
+    def __create_agency_slugs_key(
+            self, 
+            document: dict, 
+            value_key: str = "agency_slugs", 
+            values: list = None
+        ) -> dict:
         document_copy = document.copy()
         
         document_copy.update({
@@ -303,7 +313,20 @@ class AgencyData:
         
         return document_copy
     
-    def process_data(self, return_format: str = None) -> list[dict]:
+    def __del_field_keys(self, document: dict):
+        document_copy = document.copy()
+        
+        for key in self.field_keys:
+            document_copy.pop(key, None)
+        
+        return document_copy
+    
+    def process_data(
+            self, 
+            return_format: str = None, 
+            return_values_as_str: bool = True, 
+            identify_ira: bool = True
+        ) -> list[dict]:
         """Process agency data for each document.
 
         Args:
@@ -313,10 +336,14 @@ class AgencyData:
             list[dict]: List of processed documents.
         """
         return [
-            self._extract_parents_subagencies(
-                self._create_agency_slugs_key(doc, values=self._extract_agency_slugs(doc)), 
-                return_format=return_format
-                ) 
+            self.__del_field_keys(
+                self.__extract_parents_subagencies(
+                    self.__create_agency_slugs_key(doc, values=self.__extract_agency_slugs(doc)), 
+                    return_format=return_format, 
+                    return_values_as_str=return_values_as_str, 
+                    identify_ira=identify_ira
+                    )
+                )
             for doc in self.documents
             ]
 

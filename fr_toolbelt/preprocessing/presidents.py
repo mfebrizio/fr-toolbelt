@@ -2,6 +2,9 @@ from .fields import FieldData
 
 
 class Presidents(FieldData):
+    """Class for processing president data.
+    Inherits from `FieldData`.
+    """    
     def __init__(
             self, 
             documents: list[dict], 
@@ -26,11 +29,3 @@ class Presidents(FieldData):
             values = field_info.get(self.subfield_key)
 
         return values
-
-
-if __name__ == "__main__":
-    
-    test_documents = [{f"{n}": n} for n in range(10)]
-    test_instance = Presidents(test_documents)
-    print(type(test_instance))
-    print(dir(test_instance))

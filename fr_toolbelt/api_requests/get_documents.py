@@ -25,7 +25,7 @@ class QueryError(Exception):
     pass
 
 
-def retrieve_results_by_page_range(num_pages: int, endpoint_url: str, dict_params: dict) -> list:
+def _retrieve_results_by_page_range(num_pages: int, endpoint_url: str, dict_params: dict) -> list:
     """Retrieve documents by looping over a given number of pages.
 
     Args:
@@ -48,7 +48,7 @@ def retrieve_results_by_page_range(num_pages: int, endpoint_url: str, dict_param
     return results, count
 
 
-def retrieve_results_by_next_page(endpoint_url: str, dict_params: dict) -> list:
+def _retrieve_results_by_next_page(endpoint_url: str, dict_params: dict) -> list:
     """Retrieve documents by accessing "next_page_url" returned by each request.
 
     Args:
@@ -84,7 +84,7 @@ def retrieve_results_by_next_page(endpoint_url: str, dict_params: dict) -> list:
     return results
 
 
-def query_documents_endpoint(endpoint_url: str, dict_params: dict):
+def _query_documents_endpoint(endpoint_url: str, dict_params: dict):
     """GET request for documents endpoint.
 
     Args:
@@ -147,14 +147,14 @@ def query_documents_endpoint(endpoint_url: str, dict_params: dict):
                                         })
                 
                 # get documents
-                results_qrt = retrieve_results_by_next_page(endpoint_url, dict_params_qrt)
+                results_qrt = _retrieve_results_by_next_page(endpoint_url, dict_params_qrt)
                 results.extend(results_qrt)
                 count += response["count"]
     
     # handles normal queries
     elif response["count"] in range(max_documents_threshold + 1):
         count += response["count"]
-        results.extend(retrieve_results_by_next_page(endpoint_url, dict_params))
+        results.extend(_retrieve_results_by_next_page(endpoint_url, dict_params))
     
     # otherwise something went wrong
     else:
@@ -206,11 +206,11 @@ def get_documents_by_date(start_date: str,
         'fields[]': fields
         })
     
-    # relies on functionality that empty strings '' are falsey in Python: https://docs.python.org/3/library/stdtypes.html#truth-value-testing
+    # empty strings '' are falsey in Python: https://docs.python.org/3/library/stdtypes.html#truth-value-testing
     if end_date:
         dict_params.update({'conditions[publication_date][lte]': f"{end_date}"})
     
-    results, count = query_documents_endpoint(endpoint_url, dict_params)
+    results, count = _query_documents_endpoint(endpoint_url, dict_params)
     return results, count
 
 
@@ -251,11 +251,15 @@ def get_documents_by_number(document_numbers: list,
     
     endpoint_url = fr'https://www.federalregister.gov/api/v1/documents/{document_numbers_str}.json?'
     dict_params = {'fields[]': fields}
-    results, count = query_documents_endpoint(endpoint_url, dict_params)
+    results, count = _query_documents_endpoint(endpoint_url, dict_params)
     return results, count
 
 
-def extract_document_numbers(df: DataFrame, pattern: str = r"(?:[a-z]\d-)?[\w|\d]{2,4}-[\d]{5,}") -> list[str]:
+def _extract_document_numbers(
+        df: DataFrame, 
+        pattern: str = r"(?:[a-z]\d-)?[\w|\d]{2,4}-[\d]{5,}", 
+        alt_column: str = "html_url"
+    ) -> list[str]:
     r"""Extract list of Federal Register document numbers from a DataFrame.
 
     Args:
@@ -267,9 +271,9 @@ def extract_document_numbers(df: DataFrame, pattern: str = r"(?:[a-z]\d-)?[\w|\d
         list[str]: List of document numbers.
     """
     if 'document_number' in df.columns:
-        document_numbers = [f"{doc}".strip() for doc in df['document_number'].to_numpy()]
+        document_numbers = [f"{doc}".strip() for doc in df.loc[:, 'document_number'].to_numpy()]
     else:
-        url_list = df['html_url'].values.tolist()
+        url_list = df.loc[:, alt_column].to_numpy()
         document_numbers = [re.search(pattern, url).group(0) for url in url_list]
     
     return document_numbers
@@ -297,7 +301,7 @@ def parse_document_numbers(path: Path):
     else:
         raise ValueError("Input file must be CSV or Excel spreadsheet.")
     
-    return extract_document_numbers(df)
+    return _extract_document_numbers(df)
 
 
 if __name__ == "__main__":

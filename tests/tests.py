@@ -1,13 +1,13 @@
 from datetime import date
 import json
 from pathlib import Path
-from pprint import pprint
+#from pprint import pprint
 
 from requests import get
 
 from fr_toolbelt.api_requests import (
     DateFormatter, 
-    retrieve_results_by_next_page, 
+    _retrieve_results_by_next_page, 
     get_documents_by_date, 
     get_documents_by_number, 
     )
@@ -209,7 +209,7 @@ def test_retrieve_results_by_next_page_full(
     test_response = TEST_RESPONSE_FULL
     ):
     
-    results = retrieve_results_by_next_page(endpoint_url, dict_params)
+    results = _retrieve_results_by_next_page(endpoint_url, dict_params)
     assert len(results) == test_response.get("count")
 
 
@@ -218,7 +218,7 @@ def test_retrieve_results_by_next_page_partial(
     dict_params: dict = TEST_PARAMS_PARTIAL
     ):
     
-    results = retrieve_results_by_next_page(endpoint_url, dict_params)
+    results = _retrieve_results_by_next_page(endpoint_url, dict_params)
     assert len(results) == 10000, f"Should return 10,000; compare to API call: {TEST_URL_PARTIAL}"
 
 
@@ -305,8 +305,12 @@ def test_agencies_data_process(
     processed = agency_data.process_data()
     assert isinstance(processed, list)
     assert len(processed) > 0
+    processed_keys = set((k for d in processed for k in d))
     for key in check_keys:
-        assert key in set((k for d in processed for k in d)), f"Output missing {key=}"
+        assert key in processed_keys, f"Output missing {key=}"
+    for key in agency_data.field_keys:
+        assert key not in processed_keys, f"Failed to delete keys: {key=}"
+
 
 
 test_agencies = (
