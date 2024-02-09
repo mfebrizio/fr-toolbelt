@@ -1,12 +1,18 @@
 # fr-toolbelt
 
-Toolbelt of classes and functions written in Python to use with the [Federal Register (FR) API](https://www.federalregister.gov/developers/documentation/api/v1).
+Toolbelt of classes and functions written in Python to use with the [Federal Register API](https://www.federalregister.gov/developers/documentation/api/v1). The Federal Register (FR) is the daily journal of the U.S. government, containing rules, proposed rules, notices, and presidential documents from federal agencies.
 
 Name inspired by the [Requests Toolbelt](https://github.com/requests/toolbelt).
 
 ## Installation
 
-ADD.
+Install using pip:
+
+```sh
+pip install git+https://github.com/regulatorystudies/fr-toolbelt.git
+```
+
+This package was developed with Python 3.12 and requires Python 3.10 or higher.
 
 ## Basic Usage
 
@@ -175,4 +181,43 @@ processed_docs = process_documents(results, del_keys=("type", "docket_ids"))
  'subagency_slug': 'rural-business-cooperative-service',
  'title': 'Notice of Solicitation of Applications for the Rural Innovation '
           'Stronger Economy (RISE) Grant Program for Fiscal Year 2024'}
+```
+
+You can select which fields you want to process with this function too.
+
+```python
+from fr_toolbelt.preprocessing import process_documents
+
+# passing the which parameter to select which fields to process
+processed_docs = process_documents(results, which=("agencies", "presidents"), del_keys="docket_ids")
+```
+
+```JSON5
+{'agency_slugs': ['rural-business-cooperative-service',
+                  'agriculture-department'],
+ 'dockets': [{'agency_name': 'RBS',
+              'documents': [{'allow_late_comments': None,
+                             'comment_count': 1,
+                             'comment_end_date': '2024-04-02',
+                             'comment_start_date': '2024-01-02',
+                             'comment_url': 'https://www.regulations.gov/commenton/RBS-23-BUSINESS-0024-0001',
+                             'id': 'RBS-23-BUSINESS-0024-0001',
+                             'regulations_dot_gov_open_for_comment': True,
+                             'updated_at': '2024-01-22T00:04:26.978-05:00'}],
+              'id': 'RBS-23-BUSINESS-0024',
+              'supporting_documents': [],
+              'supporting_documents_count': 0,
+              'title': 'Notice of Funding Opportunity for the Rural Innovation '
+                       'Stronger Economy (RISE) Grant Program for Fiscal Year '
+                       '2024'}],
+ 'document_number': '2023-26792',
+ 'independent_reg_agency': False,
+ 'parent_name': 'Agriculture Department',
+ 'president_id': 'joe-biden',
+ 'publication_date': '2024-01-02',
+ 'regulation_id_number_info': {},
+ 'subagency_name': 'Rural Business-Cooperative Service',
+ 'title': 'Notice of Solicitation of Applications for the Rural Innovation '
+          'Stronger Economy (RISE) Grant Program for Fiscal Year 2024',
+ 'type': 'Notice'}
 ```
