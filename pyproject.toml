@@ -4,7 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fr-toolbelt"
-dynamic = ["version"]
+#dynamic = ["version"]
+version = "0.1.0"
 dependencies = [
   "requests>=2.31",
   "pandas>=1.5",
