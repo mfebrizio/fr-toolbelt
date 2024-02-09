@@ -14,19 +14,20 @@ def process_documents(
         docket_data_source: str = "dockets", 
         del_keys: str | list | tuple = None, 
         **kwargs
-    ):
+    ) -> list[dict]:
     """Process one or more fields in each document.
 
     Args:
         documents (list[dict]): Documents to process.
-        which (str | list | tuple, optional): _description_. Defaults to "all".
-        docket_data_source (str, optional): _description_. Defaults to "dockets".
+        which (str | list | tuple, optional): Which fields to process per document. Defaults to "all". Valid inputs include "all" or some combination of "agencies", "dockets", "presidents", "rin".
+        docket_data_source (str, optional): Select which field to use as a source for processing dockets data. Defaults to "dockets". Valid inputs include "regulations_dot_gov_info" and "dockets".
+        del_keys (str | list | tuple, optional): Delete select keys from results. Defaults to None.
 
     Raises:
-        PreprocessingError: _description_
+        PreprocessingError: Failed to preprocess input documents.
 
     Returns:
-        _type_: _description_
+        list[dict]: Processed documents.
     """
     # dictionary of alternative sources
     source_dict = {
@@ -34,41 +35,44 @@ def process_documents(
         "regulations_dot_gov_info": RegsDotGovData
         }
     
-    clean_fields = {
+    # maps keyword to class
+    process_fields = {
         "agencies": AgencyData, 
         "dockets": source_dict.get(docket_data_source, Dockets), 
         "presidents": Presidents, 
         "rin": RegInfoData, 
         }
     
-    if which == "all":
+    # process documents
+    if (which == "all") or ("all" in which):
     
-        for field, function in clean_fields.items():
+        for field, function in process_fields.items():
             if field == "agencies":
                 metadata, schema = AgencyMetadata().get_agency_metadata()
                 documents = function(documents, metadata, schema).process_data(**kwargs)
             else:
                 documents = function(documents).process_data()
     
-    elif isinstance(which, str) and (which in clean_fields.keys()):
+    elif isinstance(which, str) and (which in process_fields.keys()):
         if which == "agencies":
             metadata, schema = AgencyMetadata().get_agency_metadata()
-            documents = clean_fields[which](documents, metadata, schema).process_data(**kwargs)
+            documents = process_fields[which](documents, metadata, schema).process_data(**kwargs)
         else:
-            documents = clean_fields[which](documents).process_data()
+            documents = process_fields[which](documents).process_data()
     
     elif isinstance(which, (list, tuple)):
-        valid_fields = (w for w in which if w in clean_fields.keys())
+        valid_fields = (w for w in which if w in process_fields.keys())
         for field in valid_fields:
             if field == "agencies":
                 metadata, schema = AgencyMetadata().get_agency_metadata()
-                documents = clean_fields[field](documents, metadata, schema).process_data(**kwargs)
+                documents = process_fields[field](documents, metadata, schema).process_data(**kwargs)
             else:
-                documents = clean_fields[field](documents).process_data()
+                documents = process_fields[field](documents).process_data()
     
     else:
-        raise PreprocessingError
+        raise PreprocessingError("Failed to preprocess input documents.")
     
+    # delete keys if passed
     if del_keys is not None:
         return [{k: v for k, v in doc.items() if ((k != del_keys) and (k not in del_keys))} for doc in documents]
     else:

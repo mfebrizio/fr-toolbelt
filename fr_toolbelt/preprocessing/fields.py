@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 
 
 class FieldData(ABC):
+    """Base class for processing Federal Register fields."""    
     def __init__(self, 
                  documents: list[dict], 
                  field_key: str = None,

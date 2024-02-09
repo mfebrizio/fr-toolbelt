@@ -1,11 +1,10 @@
-try:
-    from .fields import FieldData
-except ImportError:
-    from fields import FieldData
+from .fields import FieldData
 
 
 class RegsDotGovData(FieldData):
-
+    """Class for processing docket data sourced from Regulations.gov.
+    Inherits from `FieldData`.
+    """
     def __init__(self, 
                  documents: list[dict], 
                  field_key: str = "regulations_dot_gov_info",
@@ -55,6 +54,9 @@ class RegsDotGovData(FieldData):
 
 
 class Dockets(RegsDotGovData):
+    """Class for processing docket data from "dockets" field.
+    Inherits from `RegsDotGovData`.
+    """
     def __init__(self, 
                  documents: list[dict], 
                  field_key: str = "dockets", 
@@ -62,25 +64,3 @@ class Dockets(RegsDotGovData):
                  value_key: str = "docket_id"
                  ) -> None:
         super().__init__(documents=documents, field_key=field_key, subfield_key=subfield_key, value_key=value_key)
-
-
-if __name__ == "__main__":
-    
-    import requests
-    url = r"https://www.federalregister.gov/api/v1/documents.json?fields[]=docket_id&fields[]=docket_ids&fields[]=dockets&fields[]=document_number&fields[]=json_url&fields[]=regulations_dot_gov_info&fields[]=type&per_page=1000&conditions[publication_date][is]=2024-02-05&conditions[type][]=RULE&conditions[type][]=PRORULE&conditions[type][]=PRESDOCU"
-    res = requests.get(url).json()["results"]
-    
-    #test_documents = [{f"{n}": n} for n in range(10)]
-    #test_instance = RegsDotGovData(test_documents)
-    #print(type(test_instance))
-    #print(dir(test_instance))
-
-    test_documents = res  #[{f"{n}": n} for n in range(10)]
-    test_instance = Dockets(test_documents)
-    print(type(test_instance))
-    print(dir(test_instance))
-    print(test_instance.field_key, test_instance.subfield_key, test_instance.value_key)
-    
-    data = test_instance.process_data()
-    ids = [(d.get("document_number"), d.get("docket_id")) for d in data if d.get("docket_id") is not None]
-    print(ids)

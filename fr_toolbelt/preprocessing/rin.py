@@ -1,11 +1,10 @@
-try:
-    from .fields import FieldData
-except ImportError:
-    from fields import FieldData
+from .fields import FieldData
 
 
 class RegInfoData(FieldData):
-    
+    """Class for processing Regulation Identifier Number (RIN) data (sourced from [RegInfo](https://www.reginfo.gov/public/jsp/Utilities/faq.jsp#dashboard)).
+    Inherits from `FieldData`.
+    """
     def __init__(self, 
                  documents: list[dict], 
                  field_key: str = "regulation_id_number_info", 
@@ -36,14 +35,3 @@ class RegInfoData(FieldData):
         
         # only return RIN info from most recent Unified Agenda issue
         return tuple_list[0]
-
-
-if __name__ == "__main__":
-    
-    test_documents = [{f"{n}": n} for n in range(10)]
-    test_instance = RegInfoData(test_documents)
-    print(type(test_instance))
-    print(dir(test_instance))
-    print(test_instance.field_key, 
-          test_instance.subfield_keys, 
-          test_instance.value_keys)
