@@ -1,13 +1,13 @@
 from datetime import date
 import json
 from pathlib import Path
-from pprint import pprint
+#from pprint import pprint
 
 from requests import get
 
 from fr_toolbelt.api_requests import (
     DateFormatter, 
-    retrieve_results_by_next_page, 
+    _retrieve_results_by_next_page, 
     get_documents_by_date, 
     get_documents_by_number, 
     )
@@ -209,7 +209,7 @@ def test_retrieve_results_by_next_page_full(
     test_response = TEST_RESPONSE_FULL
     ):
     
-    results = retrieve_results_by_next_page(endpoint_url, dict_params)
+    results = _retrieve_results_by_next_page(endpoint_url, dict_params)
     assert len(results) == test_response.get("count")
 
 
@@ -218,7 +218,7 @@ def test_retrieve_results_by_next_page_partial(
     dict_params: dict = TEST_PARAMS_PARTIAL
     ):
     
-    results = retrieve_results_by_next_page(endpoint_url, dict_params)
+    results = _retrieve_results_by_next_page(endpoint_url, dict_params)
     assert len(results) == 10000, f"Should return 10,000; compare to API call: {TEST_URL_PARTIAL}"
 
 
