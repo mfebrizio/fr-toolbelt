@@ -5,6 +5,7 @@ Preprocessing Federal Register API results.
 __all__ = [
     "AgencyMetadata",
     "AgencyData", 
+    "INDEPENDENT_REG_AGENCIES",
     "RegsDotGovData", 
     "Dockets", 
     "process_documents", 
@@ -12,7 +13,7 @@ __all__ = [
     "RegInfoData", 
     ]
 
-from .agencies import AgencyMetadata, AgencyData
+from .agencies import AgencyMetadata, AgencyData, INDEPENDENT_REG_AGENCIES
 
 from .dockets import RegsDotGovData, Dockets
 
