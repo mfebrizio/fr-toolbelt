@@ -228,6 +228,15 @@ def test_get_documents_by_date(start = "2024-01-01", end = "2024-01-31"):
     assert count == len(results)
 
 
+def test_get_documents_by_date_types(start = "2024-01-01", end = "2024-01-31", types = ["RULE", "PRORULE"]):
+    results, count = get_documents_by_date(start, end, document_types=types)
+    assert isinstance(results, list)
+    assert count == len(results)
+    res_types = set(doc.get("type") for doc in results)
+    assert len(res_types) <= len(types)
+    assert all(1 if t in types else 0 for t in res_types)
+
+
 def test_get_documents_by_number(numbers = ["2024-02204", "2023-28203", "2023-25797"]):
     results, count = get_documents_by_number(numbers)
     assert isinstance(results, list)
