@@ -11,11 +11,30 @@ from .format_dates import DateFormatter
 
 
 BASE_PARAMS = {
-    'per_page': 1000, 
+    "per_page": 1000, 
     "page": 0, 
-    'order': "oldest"
+    "order": "oldest"
     }
-BASE_URL = r'https://www.federalregister.gov/api/v1/documents.json?'
+BASE_URL = r"https://www.federalregister.gov/api/v1/documents.json?"
+DEFAULT_FIELDS = (
+    "document_number", 
+    "citation", 
+    "publication_date", 
+    "agency_names", 
+    "agencies", 
+    "title", 
+    "type", 
+    "action",
+    "abstract", 
+    "docket_ids", 
+    "dockets",
+    "president",
+    "regulation_id_number_info", 
+    "regulations_dot_gov_info",
+    "correction_of",
+    "json_url",
+    "html_url", 
+    )
 
 
 # -- functions for handling API requests -- #
@@ -84,7 +103,7 @@ def _retrieve_results_by_next_page(endpoint_url: str, dict_params: dict) -> list
     return results
 
 
-def _query_documents_endpoint(endpoint_url: str, dict_params: dict):
+def _query_documents_endpoint(endpoint_url: str, dict_params: dict) -> tuple[list, int]:
     """GET request for documents endpoint.
 
     Args:
@@ -110,7 +129,7 @@ def _query_documents_endpoint(endpoint_url: str, dict_params: dict):
         end_date = DateFormatter(dict_params.get("conditions[publication_date][lte]"))
         
         # set range of years
-        start_year = start_date.get_year()  #extract_year(start_date)
+        start_year = start_date.get_year()
         if end_date is None:
             end_date = date.today()
             end_year = end_date.year
@@ -172,43 +191,37 @@ def _query_documents_endpoint(endpoint_url: str, dict_params: dict):
 
 
 def get_documents_by_date(start_date: str, 
-                          end_date: str | None = None, 
-                          fields: tuple = ('document_number', 
-                                           'publication_date', 
-                                           'agency_names', 
-                                           'agencies', 
-                                           'citation', 
-                                           'start_page', 
-                                           'end_page', 
-                                           'html_url', 
-                                           'pdf_url', 
-                                           'title', 
-                                           'type', 
-                                           'action', 
-                                           'regulation_id_number_info', 
-                                           'correction_of'),
+                          end_date: str = None, 
+                          document_types: tuple | list = None,
+                          fields: tuple[str] | list[str] = DEFAULT_FIELDS,
                           endpoint_url: str = BASE_URL, 
-                          dict_params: dict = BASE_PARAMS):
+                          dict_params: dict = BASE_PARAMS, 
+                          ):
     """Retrieve Federal Register documents using a date range.
 
     Args:
-        start_date (str): Start date when documents were published (inclusive; format must be 'yyyy-mm-dd').
-        end_date (str | None, optional): End date (inclusive; format must be 'yyyy-mm-dd'). Defaults to None (implies end date is `datetime.date.today()`).
-        fields (tuple, optional): Fields/columns to retrieve. Defaults to ('document_number', 'publication_date', 'agency_names', 'agencies', 'citation', 'start_page', 'end_page', 'html_url', 'pdf_url', 'title', 'type', 'action', 'regulation_id_number_info', 'correction_of').
-        endpoint_url (_type_, optional): Endpoint url. Defaults to r'https://www.federalregister.gov/api/v1/documents.json?'.
+        start_date (str): Start date when documents were published (inclusive; format must be "yyyy-mm-dd").
+        end_date (str, optional): End date (inclusive; format must be "yyyy-mm-dd"). Defaults to None (implies end date is `datetime.date.today()`).
+        document_types (tuple[str] | list[str], optional): If passed, only return specific document types. 
+        Valid types are "RULE" (final rules), "PRORULE" (proposed rules), "NOTICE" (notices), and "PRESDOCU" (presidential documents). Defaults to None.
+        fields (tuple | list, optional): Fields/columns to retrieve. Defaults to constant DEFAULT_FIELDS.
+        endpoint_url (str, optional): Endpoint url. Defaults to r"https://www.federalregister.gov/api/v1/documents.json?".
 
     Returns:
         tuple[list, int]: Tuple of API results, count of documents retrieved.
     """
     # update dictionary of parameters
     dict_params.update({
-        'conditions[publication_date][gte]': f'{start_date}', 
-        'fields[]': fields
+        "conditions[publication_date][gte]": f"{start_date}", 
+        "fields[]": fields
         })
     
-    # empty strings '' are falsey in Python: https://docs.python.org/3/library/stdtypes.html#truth-value-testing
+    # empty strings "" are falsey in Python: https://docs.python.org/3/library/stdtypes.html#truth-value-testing
     if end_date:
-        dict_params.update({'conditions[publication_date][lte]': f"{end_date}"})
+        dict_params.update({"conditions[publication_date][lte]": f"{end_date}"})
+    
+    if document_types is not None:
+        dict_params.update({"conditions[type][]": list(document_types)})
     
     results, count = _query_documents_endpoint(endpoint_url, dict_params)
     return results, count
@@ -218,28 +231,15 @@ def get_documents_by_date(start_date: str,
 
 
 def get_documents_by_number(document_numbers: list, 
-                            fields: tuple = ('document_number', 
-                                             'publication_date', 
-                                             'agency_names', 
-                                             'agencies', 
-                                             'citation', 
-                                             'start_page', 
-                                             'end_page', 
-                                             'html_url', 
-                                             'pdf_url', 
-                                             'title', 
-                                             'type', 
-                                             'action', 
-                                             'regulation_id_number_info', 
-                                             'correction_of'), 
+                            fields: tuple | list = DEFAULT_FIELDS, 
                             sort_data: bool = True
                             ):
     """Retrieve Federal Register documents using a list of document numbers.
 
     Args:
-        document_numbers (list): Documents to retrieve based on 'document_number' field.
-        fields (tuple, optional): Fields/columns to retrieve. Defaults to ('document_number', 'publication_date', 'agency_names', 'agencies', 'citation', 'start_page', 'end_page', 'html_url', 'pdf_url', 'title', 'type', 'action', 'regulation_id_number_info', 'correction_of').
-        sort_data (bool, optional): Sort documents by 'document_number'. Defaults to True.
+        document_numbers (list): Documents to retrieve based on "document_number" field.
+        fields (tuple, optional): Fields/columns to retrieve. Defaults to constant DEFAULT_FIELDS.
+        sort_data (bool, optional): Sort documents by "document_number". Defaults to True.
 
     Returns:
         tuple[list, int]: Tuple of API results, count of documents retrieved.
@@ -249,8 +249,8 @@ def get_documents_by_number(document_numbers: list,
     else:
         document_numbers_str = ",".join(document_numbers)
     
-    endpoint_url = fr'https://www.federalregister.gov/api/v1/documents/{document_numbers_str}.json?'
-    dict_params = {'fields[]': fields}
+    endpoint_url = fr"https://www.federalregister.gov/api/v1/documents/{document_numbers_str}.json?"
+    dict_params = {"fields[]": fields}
     results, count = _query_documents_endpoint(endpoint_url, dict_params)
     return results, count
 
@@ -270,8 +270,8 @@ def _extract_document_numbers(
     Returns:
         list[str]: List of document numbers.
     """
-    if 'document_number' in df.columns:
-        document_numbers = [f"{doc}".strip() for doc in df.loc[:, 'document_number'].to_numpy()]
+    if "document_number" in df.columns:
+        document_numbers = [f"{doc}".strip() for doc in df.loc[:, "document_number"].to_numpy()]
     else:
         url_list = df.loc[:, alt_column].to_numpy()
         document_numbers = [re.search(pattern, url).group(0) for url in url_list]
@@ -302,8 +302,3 @@ def parse_document_numbers(path: Path):
         raise ValueError("Input file must be CSV or Excel spreadsheet.")
     
     return _extract_document_numbers(df)
-
-
-if __name__ == "__main__":
-    
-    pass
