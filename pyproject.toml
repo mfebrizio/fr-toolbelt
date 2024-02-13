@@ -21,7 +21,7 @@ maintainers = [
 description = "Toolbelt of classes and functions written in Python to use with the Federal Register (FR) API."
 readme = "README.md"
 license = {file = "LICENSE"}
-keywords = ["Federal Register", "government", "api", ]
+keywords = ["Federal Register", "government", "api", "regulation", "regulatory", ]
 classifiers = [
   "Programming Language :: Python :: 3", 
   "Programming Language :: Python :: 3.10",
