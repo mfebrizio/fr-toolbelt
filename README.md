@@ -2,7 +2,7 @@
 
 Toolbelt of classes and functions written in Python to use with the [Federal Register API](https://www.federalregister.gov/developers/documentation/api/v1). The Federal Register (FR) is the daily journal of the U.S. government, containing rules, proposed rules, notices, and presidential documents from federal agencies.
 
-Name inspired by the [Requests Toolbelt](https://github.com/requests/toolbelt).
+Name inspired by the [Requests Toolbelt](https://github.com/requests/toolbelt) package. "FR" is a common shorthand for the Federal Register, in part because document citations take the form of VOLUME FR STARTPAGE (e.g., [88 FR 21879](https://www.federalregister.gov/d/2023-07760)).
 
 ## Installation
 
@@ -15,6 +15,14 @@ pip install git+https://github.com/regulatorystudies/fr-toolbelt.git
 This package was developed with Python 3.12 and requires Python 3.10 or higher.
 
 ## Basic Usage
+
+You can run the package as a module to get an illustration of how it processes documents:
+
+```bash
+python -m fr_toolbelt
+```
+
+Generally, you'll want to import specific classes or functions to meet your project's needs. More on what each module offers below.
 
 The FR toolbelt contains two modules:
 
@@ -36,15 +44,22 @@ results, count = get_documents_by_date(start, end)
 
 ```
 
+To only retrieve documents of a particular type (or types), pass the document_types parameter to the function call.
+
+```python
+start = "2024-01-01"
+end = "2024-01-31"
+types = ["RULE", "PRORULE"]
+results, count = get_documents_by_date(start, end, document_types=types)
+```
+
 To deviate from the default set of fields, pass the fields parameter to the function call.
 
 ```python
-
 start = "2024-01-01"
 end = "2024-01-31"
 fields = ["document_number", "publication_date", "raw_text_url"]
 results, count = get_documents_by_date(start, end, fields=fields)
-
 ```
 
 More customization is possible by examining the parameters and docstrings. Note that this function works around the maximum of 10,000 results per search by querying smaller subsets of documents and compiling them into a larger result set. So retrieving all [28,308 documents published in 2020](https://www.federalregister.gov/api/v1/documents.json?conditions[publication_date][year]=2020&per_page=1000) is now possible with a single function call.
@@ -56,7 +71,6 @@ from fr_toolbelt.api_requests import get_documents_by_number
 
 document_numbers = ["2024-02204", "2023-28203", "2023-25797"]
 results, count = get_documents_by_number(document_numbers)
-
 ```
 
 These functions also handle date formatting under the hood and functionality for identifying and removing duplicate entries (not a current bug in the API if using the order=oldest or order=newest parameter).
