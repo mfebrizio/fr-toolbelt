@@ -7,6 +7,9 @@ from .duplicates import identify_duplicates, remove_duplicates
 from .format_dates import DateFormatter, DateFormatError
 
 from .get_documents import (
+    BASE_URL,
+    BASE_PARAMS,
+    DEFAULT_FIELDS, 
     QueryError,
     get_documents_by_date, 
     get_documents_by_number, 
@@ -19,6 +22,9 @@ __all__ = [
     "remove_duplicates",
     "DateFormatter", 
     "DateFormatError", 
+    "BASE_URL",
+    "BASE_PARAMS",
+    "DEFAULT_FIELDS",
     "QueryError",
     "get_documents_by_date", 
     "get_documents_by_number", 
