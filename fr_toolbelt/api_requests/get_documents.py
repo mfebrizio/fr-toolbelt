@@ -138,15 +138,12 @@ def _query_documents_endpoint(endpoint_url: str, dict_params: dict) -> tuple[lis
         years = range(start_year, end_year + 1)
         
         # format: YYYY-MM-DD
-        quarter_tuples = (
-            ("01-01", "03-31"), ("04-01", "06-30"), 
-            ("07-01", "09-30"), ("10-01", "12-31")
-            )
+        quarters = ("Q1", "Q2", "Q3", "Q4")
         
         # retrieve documents
         dict_params_qrt = deepcopy(dict_params)
         for year in years:
-            for quarter in quarter_tuples:            
+            for quarter in quarters:            
                 results_qrt = []
                 
                 # set start and end dates based on input date

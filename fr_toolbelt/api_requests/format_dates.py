@@ -80,9 +80,8 @@ class DateFormatter:
         Returns input date if True, otherwise returns first or last day of quarter.
 
         Args:
-            input_date (date | str): Date to check.
-            year (str): Year to check against.
-            quarter (tuple): Quarter to check against.
+            check_year (str): Year to check against.
+            check_quarter (str): Quarter to check against.
             return_quarter_end (bool, optional): Return end date of quarter when input not in range. Defaults to True.
 
         Raises:
