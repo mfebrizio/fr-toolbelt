@@ -53,7 +53,7 @@ def main():
 
     del_keys = ("type", "docket_ids")
     processed_docs = process_documents(results, del_keys=del_keys, return_values_as_str=False, identify_ira=False)
-    print(f"\n\n-- AFTER PROCESSING ALL FIELDS, DELETING 2 FIELDS ({"; ".join(del_keys)}), RETURNING AGENCY INFO AS LISTS, AND NOT IDENTIFYING INDEPENDENT REG AGENCIES --\n")
+    print(f"\n\n-- AFTER PROCESSING ALL FIELDS, DELETING 2 FIELDS ({'; '.join(del_keys)}), RETURNING AGENCY INFO AS LISTS, AND NOT IDENTIFYING INDEPENDENT REG AGENCIES --\n")
     pprint(processed_docs[0])
 
 
