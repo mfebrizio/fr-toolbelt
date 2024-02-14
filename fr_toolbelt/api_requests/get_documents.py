@@ -6,7 +6,7 @@ import re
 from pandas import DataFrame, read_csv, read_excel
 import requests
 
-from .duplicates import identify_duplicates
+from .duplicates import process_duplicates
 from .format_dates import DateFormatter
 
 
@@ -103,7 +103,11 @@ def _retrieve_results_by_next_page(endpoint_url: str, dict_params: dict) -> list
     return results
 
 
-def _query_documents_endpoint(endpoint_url: str, dict_params: dict) -> tuple[list, int]:
+def _query_documents_endpoint(
+        endpoint_url: str, 
+        dict_params: dict, 
+        handle_duplicates: bool | str = False
+    ) -> tuple[list, int]:
     """GET request for documents endpoint.
 
     Args:
@@ -176,11 +180,10 @@ def _query_documents_endpoint(endpoint_url: str, dict_params: dict) -> tuple[lis
     else:
         raise QueryError(f"Query returned document count of {response['count']}.")
 
-    duplicates = identify_duplicates(results, key="document_number")
-    count_dups = len(duplicates)
-    if count_dups > 0:
-        raise QueryError(f"API request returned {count_dups} duplicate values.")
-    
+    if not handle_duplicates:
+        pass
+    else:
+        results = process_duplicates(results, key="document_number", how=handle_duplicates)
     return results, count
 
 

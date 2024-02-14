@@ -2,7 +2,7 @@
 Making requests from the Federal Register API.
 """
 
-from .duplicates import identify_duplicates, remove_duplicates
+from .duplicates import identify_duplicates, remove_duplicates, process_duplicates, DuplicateError
 
 from .format_dates import DateFormatter, DateFormatError
 
