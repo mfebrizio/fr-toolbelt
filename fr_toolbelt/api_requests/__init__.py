@@ -20,6 +20,8 @@ from .get_documents import (
 __all__ = [
     "identify_duplicates", 
     "remove_duplicates",
+    "process_duplicates",
+    "DuplicateError",
     "DateFormatter", 
     "DateFormatError", 
     "BASE_URL",

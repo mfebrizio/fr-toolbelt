@@ -65,7 +65,7 @@ def test_process_duplicates_raise(results = TEST_DATA + TEST_DATA[0:2]):
     test_error = None
     results_out = None
     try:
-        results_out = process_duplicates(results, "document_number", "raise")
+        results_out = process_duplicates(results, "raise", key="document_number")
     except DuplicateError as e:
         test_error = e
         assert isinstance(e, DuplicateError)
@@ -74,15 +74,21 @@ def test_process_duplicates_raise(results = TEST_DATA + TEST_DATA[0:2]):
     
 
 def test_process_duplicates_flag(results = TEST_DATA + TEST_DATA[0:2]):
-    results_out = process_duplicates(results, "document_number", "flag")
+    results_out = process_duplicates(results, "flag", key="document_number")
     flagged = [r for r in results_out if r.get("duplicate", False) == True]
     assert len(flagged) == (len(TEST_DATA[0:2]) * 2)
     assert all(1 if num in set(doc.get("document_number") for doc in flagged) else 0 for num in (doc.get("document_number") for doc in TEST_DATA[0:2]))
 
 
-def test_process_duplicates_drop(results = TEST_DATA + TEST_DATA[0:2]):
-    results_out = process_duplicates(results, "document_number", "drop")
+def test_process_duplicates_drop_key(results = TEST_DATA + TEST_DATA[0:2]):
+    results_out = process_duplicates(results, "drop", key="document_number")
     assert len(results_out) == len(TEST_DATA)
+
+
+#def test_process_duplicates_drop_dict(results = TEST_DATA + TEST_DATA[0:2]):
+#    results[0].update({"agency_names": "test"})
+#    results_out = process_duplicates(results, "drop")
+#    assert len(results_out) == len(TEST_DATA), f"{len(results_out)}, {len(TEST_DATA)}"
 
 
 def test_process_duplicates_match_wildcard(results = TEST_DATA + TEST_DATA[0:2]):
@@ -100,7 +106,8 @@ def test_process_duplicates_match_wildcard(results = TEST_DATA + TEST_DATA[0:2])
 test_duplicates = (
     test_process_duplicates_raise, 
     test_process_duplicates_flag, 
-    test_process_duplicates_drop, 
+    test_process_duplicates_drop_key,
+    #test_process_duplicates_drop_dict, 
     test_process_duplicates_match_wildcard, 
 )
 

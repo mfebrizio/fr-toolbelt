@@ -196,6 +196,7 @@ def get_documents_by_date(start_date: str,
                           fields: tuple[str] | list[str] = DEFAULT_FIELDS,
                           endpoint_url: str = BASE_URL, 
                           dict_params: dict = BASE_PARAMS, 
+                          handle_duplicates: bool | str = False
                           ):
     """Retrieve Federal Register documents using a date range.
 
@@ -223,7 +224,7 @@ def get_documents_by_date(start_date: str,
     if document_types is not None:
         dict_params.update({"conditions[type][]": list(document_types)})
     
-    results, count = _query_documents_endpoint(endpoint_url, dict_params)
+    results, count = _query_documents_endpoint(endpoint_url, dict_params, handle_duplicates=handle_duplicates)
     return results, count
 
 
