@@ -58,30 +58,50 @@ with open(TESTS_PATH / "test_documents.json", "r", encoding="utf-8") as f:
 TEST_METADATA, TEST_SCHEMA = AgencyMetadata().get_agency_metadata()
 
 
+# api_requests.duplicates #
 
-# api_requests. duplicates #
 
 def test_process_duplicates_raise(results = TEST_DATA + TEST_DATA[0:2]):
     test_error = None
+    results_out = None
     try:
-        process_duplicates(results, "document_number", "raise")
+        results_out = process_duplicates(results, "document_number", "raise")
     except DuplicateError as e:
         test_error = e
         assert isinstance(e, DuplicateError)
     assert test_error is not None, f"{test_error=}"
+    assert results_out is None
     
 
 def test_process_duplicates_flag(results = TEST_DATA + TEST_DATA[0:2]):
-
     results_out = process_duplicates(results, "document_number", "flag")
     flagged = [r for r in results_out if r.get("duplicate", False) == True]
     assert len(flagged) == (len(TEST_DATA[0:2]) * 2)
     assert all(1 if num in set(doc.get("document_number") for doc in flagged) else 0 for num in (doc.get("document_number") for doc in TEST_DATA[0:2]))
 
 
+def test_process_duplicates_drop(results = TEST_DATA + TEST_DATA[0:2]):
+    results_out = process_duplicates(results, "document_number", "drop")
+    assert len(results_out) == len(TEST_DATA)
+
+
+def test_process_duplicates_match_wildcard(results = TEST_DATA + TEST_DATA[0:2]):
+    test_error = None
+    results_out = None
+    try:
+        results_out = process_duplicates(results, "document_number", "test")
+    except ValueError as e:
+        test_error = e
+        assert isinstance(e, ValueError)
+    assert test_error is not None, f"{test_error=}"
+    assert results_out is None
+
+
 test_duplicates = (
     test_process_duplicates_raise, 
     test_process_duplicates_flag, 
+    test_process_duplicates_drop, 
+    test_process_duplicates_match_wildcard, 
 )
 
 
