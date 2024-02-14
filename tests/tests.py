@@ -1,7 +1,7 @@
 from datetime import date
 import json
 from pathlib import Path
-#from pprint import pprint
+from pprint import pprint
 
 from requests import get
 
@@ -10,6 +10,8 @@ from fr_toolbelt.api_requests import (
     _retrieve_results_by_next_page, 
     get_documents_by_date, 
     get_documents_by_number, 
+    process_duplicates, 
+    DuplicateError, 
     )
 
 from fr_toolbelt.preprocessing import (
@@ -54,6 +56,33 @@ with open(TESTS_PATH / "test_documents.json", "r", encoding="utf-8") as f:
     TEST_DATA = json.load(f).get("results", [])
 
 TEST_METADATA, TEST_SCHEMA = AgencyMetadata().get_agency_metadata()
+
+
+
+# api_requests. duplicates #
+
+def test_process_duplicates_raise(results = TEST_DATA + TEST_DATA[0:2]):
+    test_error = None
+    try:
+        process_duplicates(results, "document_number", "raise")
+    except DuplicateError as e:
+        test_error = e
+        assert isinstance(e, DuplicateError)
+    assert test_error is not None, f"{test_error=}"
+    
+
+def test_process_duplicates_flag(results = TEST_DATA + TEST_DATA[0:2]):
+
+    results_out = process_duplicates(results, "document_number", "flag")
+    flagged = [r for r in results_out if r.get("duplicate", False) == True]
+    assert len(flagged) == (len(TEST_DATA[0:2]) * 2)
+    assert all(1 if num in set(doc.get("document_number") for doc in flagged) else 0 for num in (doc.get("document_number") for doc in TEST_DATA[0:2]))
+
+
+test_duplicates = (
+    test_process_duplicates_raise, 
+    test_process_duplicates_flag, 
+)
 
 
 # api_requests.format_dates #
@@ -228,6 +257,12 @@ def test_get_documents_by_date(start = "2024-01-01", end = "2024-01-31"):
     assert count == len(results)
 
 
+def test_get_documents_by_date_quarters(start = "2022-12-01", end = "2023-02-01"):
+    results, count = get_documents_by_date(start, end)
+    assert isinstance(results, list)
+    assert count == len(results)
+    
+
 def test_get_documents_by_date_types(start = "2024-01-01", end = "2024-01-31", types = ["RULE", "PRORULE"]):
     results, count = get_documents_by_date(start, end, document_types=types)
     assert isinstance(results, list)
@@ -235,6 +270,17 @@ def test_get_documents_by_date_types(start = "2024-01-01", end = "2024-01-31", t
     res_types = set(doc.get("type") for doc in results)
     assert len(res_types) <= len(types)
     assert all(1 if t in types else 0 for t in res_types)
+
+
+#def test_get_documents_by_date_duplicates(start = "2024-01-01", end = "2024-01-31"):
+#    results, count = get_documents_by_date(start, end)
+    #results + results
+    #assert isinstance(results, list)
+    #assert count == len(results)
+    #res_types = set(doc.get("type") for doc in results)
+    #assert len(res_types) <= len(types)
+    #assert all(1 if t in types else 0 for t in res_types)
+    
 
 
 def test_get_documents_by_number(numbers = ["2024-02204", "2023-28203", "2023-25797"]):
@@ -481,7 +527,8 @@ test_documents = (
 
 # tuple of all tests #
 ALL_TESTS = (
-    test_dates
+    test_duplicates
+    + test_dates
     + test_get_documents 
     + test_dockets 
     + test_presidents 
