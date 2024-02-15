@@ -94,11 +94,10 @@ def process_duplicates(
     """
     duplicates = identify_duplicates(results, key=key, keys=keys)
     count_dups = len(duplicates)
-    # raise, drop, tag
     if count_dups > 0:
         if not isinstance(how, str):
             raise TypeError
-        match how:
+        match how:  # match options: raise, flag, drop, wildcard
             case "raise":
                 raise DuplicateError(f"Results contain {count_dups} duplicate values based on {key}.")
             case "flag":
