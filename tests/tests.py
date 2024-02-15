@@ -85,10 +85,9 @@ def test_process_duplicates_drop_key(results = TEST_DATA + TEST_DATA[0:2]):
     assert len(results_out) == len(TEST_DATA)
 
 
-#def test_process_duplicates_drop_dict(results = TEST_DATA + TEST_DATA[0:2]):
-#    results[0].update({"agency_names": "test"})
-#    results_out = process_duplicates(results, "drop")
-#    assert len(results_out) == len(TEST_DATA), f"{len(results_out)}, {len(TEST_DATA)}"
+def test_process_duplicates_drop_keys(results = TEST_DATA + TEST_DATA[0:2]):
+    results_out = process_duplicates(results, "drop", keys=("document_number", "citation"))
+    assert len(results_out) == len(TEST_DATA), f"{len(results_out)}, {len(TEST_DATA)}"
 
 
 def test_process_duplicates_match_wildcard(results = TEST_DATA + TEST_DATA[0:2]):
