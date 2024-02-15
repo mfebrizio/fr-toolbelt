@@ -83,22 +83,14 @@ def flag_duplicates(results: list[dict], duplicates: list[dict] = None, key: str
     return res
 
 
-def process_duplicates(results: list[dict], how: str, key: str = None, keys: tuple | list = None):
+def process_duplicates(
+        results: list[dict], 
+        how: str, 
+        key: str = None, 
+        keys: tuple | list = None, 
+        report_drop: bool = False
+    ):
     """Process duplicates. Options include "raise", "flag", and "drop". 
-    If no key is provided, process duplicate dictionaries.
-
-    Args:
-        results (list[dict]): _description_
-        how (str): _description_
-        key (str, optional): _description_. Defaults to None.
-
-    Raises:
-        TypeError: _description_
-        DuplicateError: _description_
-        ValueError: _description_
-
-    Returns:
-        _type_: _description_
     """
     duplicates = identify_duplicates(results, key=key, keys=keys)
     count_dups = len(duplicates)
@@ -113,7 +105,8 @@ def process_duplicates(results: list[dict], how: str, key: str = None, keys: tup
                 res = flag_duplicates(results, duplicates=duplicates, key=key, keys=keys)
             case "drop":
                 res, removed = remove_duplicates(results, key=key, keys=keys)
-                print(f"Removed {removed} duplicates")
+                if report_drop:
+                    print(f"Removed {removed} duplicates")
             case _:
                 raise ValueError
     return res
