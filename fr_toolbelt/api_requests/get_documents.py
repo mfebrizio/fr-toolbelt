@@ -183,7 +183,7 @@ def _query_documents_endpoint(
     if not handle_duplicates:
         pass
     else:
-        results = process_duplicates(results, key="document_number", how=handle_duplicates)
+        results = process_duplicates(results, how=handle_duplicates, keys=("document_number", "citation"))
     return results, count
 
 
