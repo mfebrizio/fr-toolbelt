@@ -109,4 +109,6 @@ def process_duplicates(
                     print(f"Removed {removed} duplicates")
             case _:
                 raise ValueError
+    else:
+        res = results
     return res
