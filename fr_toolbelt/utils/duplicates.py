@@ -19,7 +19,8 @@ def identify_duplicates(results: list[dict], key: str = None, keys: tuple | list
     if (key is None) and (keys is not None):
         keys_list = (tuple((r.get(k) for k in keys)) for r in results)
         c = Counter(keys_list)
-        dup_items = [k for k, v in c.items() if v > 1]
+        #dup_items = [k for k, v in c.items() if v > 1]
+        dup_items = [r for r in results if tuple((r.get(k) for k in keys)) in [k for k, v in c.items() if v > 1]]
     elif (key is not None) and (keys is None):
         key_list = (r.get(key) for r in results)
         c = Counter(key_list)
