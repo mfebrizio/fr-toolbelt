@@ -5,59 +5,85 @@ class DuplicateError(Exception):
     pass
 
 
-def identify_duplicates(results: list[dict], key: str) -> list[dict]:
-    """Identify duplicates for further examination. If no key is provided, check for duplicate dictionaries.
+def identify_duplicates(results: list[dict], key: str = None, keys: tuple | list = None) -> list[dict]:
+    """Identify duplicates for further examination. Either one key or multiple keys can be provided.
 
     Args:
         results (list): List of results to check for duplicates.
         key (str, optional): Key representing the duplicated key: value pair. Defaults to None.
+        keys (tuple | list, optional): Keys representing the duplicated key: value pairs. Defaults to None.
 
     Returns:
         list[dict]: Duplicated items from input list.
-    """    
-    if key is None:
-        pass
-        #res_list = (tuple(r) for r in results)
-        #c = Counter(res_list)
-        #dup_items =  [k for k, v in c.items() if v > 1]
-    else:
+    """
+    if (key is None) and (keys is not None):
+        keys_list = (tuple((r.get(k) for k in keys)) for r in results)
+        c = Counter(keys_list)
+        dup_items = [k for k, v in c.items() if v > 1]
+    elif (key is not None) and (keys is None):
         key_list = (r.get(key) for r in results)
         c = Counter(key_list)
         dup_items = [r for r in results if r.get(key) in [k for k, v in c.items() if v > 1]]
-        return dup_items
+    else:
+        ValueError("Must pass values to either 'key' or 'keys'.")
+    # return output
+    return dup_items
 
 
-def remove_duplicates(results: list[dict], key: str):
+def remove_duplicates(results: list[dict], key: str = None, keys: tuple | list = None):
     """Filter out duplicates from list[dict] based on a key: value pair 
     ([source](https://www.geeksforgeeks.org/python-remove-duplicate-dictionaries-characterized-by-key/)).
+    Keeps first instance of duplicated entry.
 
     Args:
         results (list): List of results to filter out duplicates.
-        key (str): Key representing the duplicated key: value pair.
+        key (str, optional): Key representing the duplicated key: value pair. Defaults to None.
+        keys (tuple | list, optional): Keys representing the duplicated key: value pairs. Defaults to None.
 
     Returns:
         tuple[list, int]: deduplicated list, number of duplicates removed
     """    
     initial_count = len(results)
-    if key is None:  # duplicate dictionaries
-        pass
-        #unique = set(tuple(r.items()) for r in results)
-        #print(unique)
-        #res = [dict(r) for r in unique]
-    else:  # duplicate keys
-        unique = set()
-        res = []
+    unique = set()
+    res = []
+    if (key is None) and (keys is not None):  # multiple keys
+        key_tuples = tuple((r.get(k) for k in keys))
+        for r in results:
+            # testing for already present value
+            if key_tuples not in unique:
+                res.append(r)
+                # adding to set if new value
+                unique.add(key_tuples)
+    elif (key is not None) and (keys is None):  # one key
         for r in results:
             # testing for already present value
             if r.get(key) not in unique:
                 res.append(r)
                 # adding to set if new value
                 unique.add(r[key])
-        filtered_count = len(res)
-        return res, (initial_count - filtered_count)
+    else:
+        raise ValueError("Must pass values to either 'key' or 'keys'.")
+    # return output
+    filtered_count = len(res)
+    return res, (initial_count - filtered_count)
 
 
-def process_duplicates(results: list[dict], how: str, key: str):
+def flag_duplicates(results: list[dict], duplicates: list[dict] = None, key: str = None, keys: tuple | list = None):
+    if duplicates is None:
+        duplicates = identify_duplicates(results, key=key, keys=keys)
+    if (key is None) and (keys is not None):  # multiple keys
+        duplicate_pairs = [tuple((doc.get(k) for k in keys)) for doc in duplicates]
+        res = [{**doc, **{"duplicate": True}} if tuple((doc.get(k) for k in keys)) in duplicate_pairs else {**doc, **{"duplicate": False}} for doc in results]
+    elif (key is not None) and (keys is None):  # one key
+        duplicate_pairs = [doc.get(key) for doc in duplicates]
+        res = [{**doc, **{"duplicate": True}} if doc.get(key) in duplicate_pairs else {**doc, **{"duplicate": False}} for doc in results]
+    else:
+        raise ValueError("Must pass values to either 'key' or 'keys'.")
+    # return output
+    return res
+
+
+def process_duplicates(results: list[dict], how: str, key: str = None, keys: tuple | list = None):
     """Process duplicates. Options include "raise", "flag", and "drop". 
     If no key is provided, process duplicate dictionaries.
 
@@ -74,7 +100,7 @@ def process_duplicates(results: list[dict], how: str, key: str):
     Returns:
         _type_: _description_
     """
-    duplicates = identify_duplicates(results, key=key)
+    duplicates = identify_duplicates(results, key=key, keys=keys)
     count_dups = len(duplicates)
     # raise, drop, tag
     if count_dups > 0:
@@ -84,40 +110,10 @@ def process_duplicates(results: list[dict], how: str, key: str):
             case "raise":
                 raise DuplicateError(f"Results contain {count_dups} duplicate values based on {key}.")
             case "flag":
-                duplicates_list = [doc.get("document_number", "") for doc in duplicates]
-                results = [{**doc, **{"duplicate": True}} if doc.get("document_number") in duplicates_list else {**doc, **{"duplicate": False}} for doc in results]
+                res = flag_duplicates(results, duplicates=duplicates, key=key, keys=keys)
             case "drop":
-                results, removed = remove_duplicates(results, key=key)
+                res, removed = remove_duplicates(results, key=key, keys=keys)
                 print(f"Removed {removed} duplicates")
             case _:
                 raise ValueError
-    return results
-
-
-if __name__ == "__main__":
-     
-    test_list = [{"a": d[0], "b": d[1]} for d in zip("abcdefghij", range(10))]
-    test_list += test_list[0:2]
-    #print(test_list)
-    #print(set(tuple(r.items()) for r in test_list))
-    
-    res_a, count = remove_duplicates(test_list, key = "a")
-    print("Removing dup key = a", res_a, count)
-    
-    res_all, count = remove_duplicates(test_list)
-    print("Removing dup all", res_all, count)
-
-    def sort_list_dict(results, key):
-        return sorted(results, key=lambda d: d[key])
-    
-    print(sort_list_dict(res_a, "a") == sort_list_dict(res_all, "a"))
-
-    test_list += [{'a': 'g', 'b': 100}]
-    
-    res_a, count = remove_duplicates(test_list, key = "a")
-    print("Removing dup key = a", res_a, count)
-    
-    res_all, count = remove_duplicates(test_list)
-    print("Removing dup all", res_all, count)
-    
-    print(sort_list_dict(res_a, "a") == sort_list_dict(res_all, "a"))
+    return res
