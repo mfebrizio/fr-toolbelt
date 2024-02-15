@@ -6,8 +6,8 @@ import re
 from pandas import DataFrame, read_csv, read_excel
 import requests
 
-from .duplicates import process_duplicates
-from .format_dates import DateFormatter
+from ..utils.duplicates import process_duplicates
+from ..utils.format_dates import DateFormatter
 
 
 BASE_PARAMS = {

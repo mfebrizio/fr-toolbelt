@@ -1,17 +1,16 @@
 from datetime import date
 import json
 from pathlib import Path
-from pprint import pprint
+#from pprint import pprint
 
 from requests import get
 
 from fr_toolbelt.api_requests import (
-    DateFormatter, 
+
     _retrieve_results_by_next_page, 
     get_documents_by_date, 
     get_documents_by_number, 
-    process_duplicates, 
-    DuplicateError, 
+
     )
 
 from fr_toolbelt.preprocessing import (
@@ -23,6 +22,12 @@ from fr_toolbelt.preprocessing import (
     RegInfoData, 
     process_documents, 
     )
+
+from fr_toolbelt.utils import (
+    DateFormatter, 
+    process_duplicates, 
+    DuplicateError, 
+)
 
 
 # TEST OBJECTS AND UTILS #
