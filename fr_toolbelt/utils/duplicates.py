@@ -7,6 +7,10 @@ class DuplicateError(Exception):
     pass
 
 
+def _get_keys_as_tuple(document: dict, keys: tuple | list) -> tuple:
+    return tuple((document.get(k) for k in keys))
+
+
 def identify_duplicates(results: list[dict], key: str = None, keys: tuple | list = None) -> list[dict]:
     """Identify duplicates for further examination. Either one key or multiple keys can be provided.
 
@@ -19,7 +23,7 @@ def identify_duplicates(results: list[dict], key: str = None, keys: tuple | list
         list[dict]: Duplicated items from input list.
     """
     if (key is None) and (keys is not None):
-        keys_gen = (tuple((r.get(k) for k in keys)) for r in results)
+        keys_gen = (_get_keys_as_tuple(r, keys) for r in results)
         #keys_list_i = ((i, v) for i, v in enumerate(keys_list))
         c = Counter(keys_gen)
         dup_counts = [k for k, v in c.items() if v > 1]
@@ -52,8 +56,8 @@ def remove_duplicates(results: list[dict], key: str = None, keys: tuple | list =
     unique = set()
     res = []
     if (key is None) and (keys is not None):  # multiple keys
-        key_tuples = tuple((r.get(k) for k in keys))
         for r in results:
+            key_tuples = _get_keys_as_tuple(r, keys)
             # testing for already present value
             if key_tuples not in unique:
                 res.append(r)
@@ -77,8 +81,8 @@ def flag_duplicates(results: list[dict], duplicates: list[dict] = None, key: str
     if duplicates is None:
         duplicates = identify_duplicates(results, key=key, keys=keys)
     if (key is None) and (keys is not None):  # multiple keys
-        duplicate_pairs = [tuple((doc.get(k) for k in keys)) for doc in duplicates]
-        res = [{**doc, **{"duplicate": True}} if tuple((doc.get(k) for k in keys)) in duplicate_pairs else {**doc, **{"duplicate": False}} for doc in results]
+        duplicate_pairs = [_get_keys_as_tuple(doc, keys) for doc in duplicates]
+        res = [{**doc, **{"duplicate": True}} if _get_keys_as_tuple(doc, keys) in duplicate_pairs else {**doc, **{"duplicate": False}} for doc in results]
     elif (key is not None) and (keys is None):  # one key
         duplicate_pairs = [doc.get(key) for doc in duplicates]
         res = [{**doc, **{"duplicate": True}} if doc.get(key) in duplicate_pairs else {**doc, **{"duplicate": False}} for doc in results]
