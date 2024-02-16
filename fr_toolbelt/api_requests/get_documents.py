@@ -4,8 +4,8 @@ from pathlib import Path
 import re
 
 from pandas import DataFrame, read_csv, read_excel
+from progress.bar import Bar
 import requests
-from tqdm import tqdm
 
 from ..utils.duplicates import process_duplicates
 from ..utils.format_dates import DateFormatter
@@ -108,7 +108,8 @@ def _query_documents_endpoint(
         endpoint_url: str, 
         dict_params: dict, 
         handle_duplicates: bool | str = False, 
-        show_progress: bool = False,
+        #show_progress: bool = False,
+        **kwargs
     ) -> tuple[list, int]:
     """GET request for documents endpoint.
 
@@ -151,29 +152,32 @@ def _query_documents_endpoint(
         
         # retrieve documents
         dict_params_qrt = deepcopy(dict_params)
-        for year in years:
-            for quarter in quarters:
-                
-                # set start and end dates based on input date
-                gte = start_date.date_in_quarter(year, quarter, return_quarter_end=False)
-                lte = end_date.date_in_quarter(year, quarter)
-                if start_date.greater_than_date(lte):
-                    # skip quarters where start_date is later than last day of quarter
-                    continue
-                elif end_date.less_than_date(gte):
-                    # skip quarters where end_date is ealier than first day of quarter
-                    break
-                
-                # update parameters by quarter
-                dict_params_qrt.update({
-                    "conditions[publication_date][gte]": f"{gte}", 
-                    "conditions[publication_date][lte]": f"{lte}"
-                                        })
-                
-                # get documents
-                results_qrt = _retrieve_results_by_next_page(endpoint_url, dict_params_qrt)
-                results.extend(results_qrt)
-                running_count += len(results_qrt)
+
+        with Bar(kwargs.get("message", "Years retrieved"), max=len(years)) as bar:
+            for year in years:
+                for quarter in quarters:
+                    
+                    # set start and end dates based on input date
+                    gte = start_date.date_in_quarter(year, quarter, return_quarter_end=False)
+                    lte = end_date.date_in_quarter(year, quarter)
+                    if start_date.greater_than_date(lte):
+                        # skip quarters where start_date is later than last day of quarter
+                        continue
+                    elif end_date.less_than_date(gte):
+                        # skip quarters where end_date is ealier than first day of quarter
+                        break
+                    
+                    # update parameters by quarter
+                    dict_params_qrt.update({
+                        "conditions[publication_date][gte]": f"{gte}", 
+                        "conditions[publication_date][lte]": f"{lte}"
+                                            })
+                    
+                    # get documents
+                    results_qrt = _retrieve_results_by_next_page(endpoint_url, dict_params_qrt)
+                    results.extend(results_qrt)
+                    running_count += len(results_qrt)
+                bar.next()
                 
     # handles normal queries
     elif response_count in range(max_documents_threshold + 1):
@@ -204,7 +208,8 @@ def get_documents_by_date(start_date: str,
                           endpoint_url: str = BASE_URL, 
                           dict_params: dict = BASE_PARAMS, 
                           handle_duplicates: bool | str = False, 
-                          show_progress: bool = False,
+                          #show_progress: bool = False,
+                          **kwargs
                           ):
     """Retrieve Federal Register documents using a date range.
 
@@ -236,7 +241,8 @@ def get_documents_by_date(start_date: str,
         endpoint_url, 
         dict_params, 
         handle_duplicates=handle_duplicates, 
-        show_progress=show_progress
+        #show_progress=show_progress
+        **kwargs
         )
     return results, count
 
