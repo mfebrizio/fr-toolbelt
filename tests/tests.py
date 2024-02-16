@@ -79,7 +79,10 @@ def test_process_duplicates_raise(results = TEST_DATA + TEST_DATA[0:2]):
 def test_process_duplicates_flag(results = TEST_DATA + TEST_DATA[0:2]):
     results_out = process_duplicates(results, "flag", key="document_number")
     flagged = [r for r in results_out if r.get("duplicate", False) == True]
-    assert len(flagged) == (len(TEST_DATA[0:2]) * 2)
+    not_flagged = [r for r in results_out if r.get("duplicate", True) == False]
+    #print(flagged)
+    assert len(flagged) == (len(TEST_DATA[0:2]) * 2), f"No. flagged documents, {len(flagged)}, does not match duplicates."
+    assert len(not_flagged) == (len(TEST_DATA) - len(TEST_DATA[0:2])), f"No. unflagged documents, {len(not_flagged)}, does not match uniques."
     assert all(1 if num in set(doc.get("document_number") for doc in flagged) else 0 for num in (doc.get("document_number") for doc in TEST_DATA[0:2]))
 
 

@@ -24,7 +24,6 @@ def identify_duplicates(results: list[dict], key: str = None, keys: tuple | list
     """
     if (key is None) and (keys is not None):
         keys_gen = (_get_keys_as_tuple(r, keys) for r in results)
-        #keys_list_i = ((i, v) for i, v in enumerate(keys_list))
         c = Counter(keys_gen)
         dup_counts = [k for k, v in c.items() if v > 1]
         dup_items = [r for r in results if tuple((r.get(k) for k in keys)) in dup_counts]
@@ -101,11 +100,8 @@ def process_duplicates(
     ):
     """Process duplicates. Options include "raise", "flag", and "drop". 
     """
-    if True: #any(k is not None for k in (key, keys)):
-        duplicates = identify_duplicates(results, key=key, keys=keys)
-        count_dups = len(duplicates)
-    #else:
-    #    raise ValueError("Must pass value for either 'key' or 'keys'.")
+    duplicates = identify_duplicates(results, key=key, keys=keys)
+    count_dups = len(duplicates)
     if count_dups > 0:
         if not isinstance(how, str):
             raise TypeError
