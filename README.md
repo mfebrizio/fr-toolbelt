@@ -28,6 +28,7 @@ The FR toolbelt contains two modules:
 
 - `api_requests` for requesting documents from the Federal Register API.
 - `preprocessing` for processing Federal Register documents to further analyze.
+- `utils` for providing utility classes and functions to the other modules
 
 ### API requests module
 
@@ -72,8 +73,6 @@ from fr_toolbelt.api_requests import get_documents_by_number
 document_numbers = ["2024-02204", "2023-28203", "2023-25797"]
 results, count = get_documents_by_number(document_numbers)
 ```
-
-These functions also handle date formatting under the hood and functionality for identifying and removing duplicate entries (not a current bug in the API if using the order=oldest or order=newest parameter).
 
 The `api_requests` module may add support for endpoints other than the documents endpoint at a future point.
 
@@ -235,3 +234,7 @@ processed_docs = process_documents(results, which=("agencies", "presidents"), de
           'Stronger Economy (RISE) Grant Program for Fiscal Year 2024',
  'type': 'Notice'}
 ```
+
+### Utils module
+
+These functions handle date formatting under the hood and provide functionality for identifying and removing duplicate entries (not a current bug in the API if using the order=oldest or order=newest parameter).

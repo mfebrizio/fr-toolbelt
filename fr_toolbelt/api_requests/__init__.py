@@ -2,10 +2,6 @@
 Making requests from the Federal Register API.
 """
 
-from .duplicates import identify_duplicates, remove_duplicates, process_duplicates, DuplicateError
-
-from .format_dates import DateFormatter, DateFormatError
-
 from .get_documents import (
     BASE_URL,
     BASE_PARAMS,
@@ -18,10 +14,6 @@ from .get_documents import (
 )
 
 __all__ = [
-    "identify_duplicates", 
-    "remove_duplicates",
-    "DateFormatter", 
-    "DateFormatError", 
     "BASE_URL",
     "BASE_PARAMS",
     "DEFAULT_FIELDS",

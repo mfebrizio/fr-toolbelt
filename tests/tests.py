@@ -1,17 +1,14 @@
 from datetime import date
 import json
 from pathlib import Path
-from pprint import pprint
+#from pprint import pprint
 
 from requests import get
 
 from fr_toolbelt.api_requests import (
-    DateFormatter, 
     _retrieve_results_by_next_page, 
     get_documents_by_date, 
     get_documents_by_number, 
-    process_duplicates, 
-    DuplicateError, 
     )
 
 from fr_toolbelt.preprocessing import (
@@ -23,6 +20,12 @@ from fr_toolbelt.preprocessing import (
     RegInfoData, 
     process_documents, 
     )
+
+from fr_toolbelt.utils import (
+    DateFormatter, 
+    process_duplicates, 
+    DuplicateError, 
+)
 
 
 # TEST OBJECTS AND UTILS #
@@ -65,7 +68,7 @@ def test_process_duplicates_raise(results = TEST_DATA + TEST_DATA[0:2]):
     test_error = None
     results_out = None
     try:
-        results_out = process_duplicates(results, "document_number", "raise")
+        results_out = process_duplicates(results, "raise", key="document_number")
     except DuplicateError as e:
         test_error = e
         assert isinstance(e, DuplicateError)
@@ -74,22 +77,30 @@ def test_process_duplicates_raise(results = TEST_DATA + TEST_DATA[0:2]):
     
 
 def test_process_duplicates_flag(results = TEST_DATA + TEST_DATA[0:2]):
-    results_out = process_duplicates(results, "document_number", "flag")
+    results_out = process_duplicates(results, "flag", key="document_number")
     flagged = [r for r in results_out if r.get("duplicate", False) == True]
-    assert len(flagged) == (len(TEST_DATA[0:2]) * 2)
+    not_flagged = [r for r in results_out if r.get("duplicate", True) == False]
+    #print(flagged)
+    assert len(flagged) == (len(TEST_DATA[0:2]) * 2), f"No. flagged documents, {len(flagged)}, does not match duplicates."
+    assert len(not_flagged) == (len(TEST_DATA) - len(TEST_DATA[0:2])), f"No. unflagged documents, {len(not_flagged)}, does not match uniques."
     assert all(1 if num in set(doc.get("document_number") for doc in flagged) else 0 for num in (doc.get("document_number") for doc in TEST_DATA[0:2]))
 
 
-def test_process_duplicates_drop(results = TEST_DATA + TEST_DATA[0:2]):
-    results_out = process_duplicates(results, "document_number", "drop")
+def test_process_duplicates_drop_key(results = TEST_DATA + TEST_DATA[0:2]):
+    results_out = process_duplicates(results, "drop", key="document_number")
     assert len(results_out) == len(TEST_DATA)
+
+
+def test_process_duplicates_drop_keys(results = TEST_DATA + TEST_DATA[0:2]):
+    results_out = process_duplicates(results, "drop", keys=("document_number", "citation"))
+    assert len(results_out) == len(TEST_DATA), f"{len(results_out)}, {len(TEST_DATA)}"
 
 
 def test_process_duplicates_match_wildcard(results = TEST_DATA + TEST_DATA[0:2]):
     test_error = None
     results_out = None
     try:
-        results_out = process_duplicates(results, "document_number", "test")
+        results_out = process_duplicates(results, "test", key="document_number")
     except ValueError as e:
         test_error = e
         assert isinstance(e, ValueError)
@@ -100,7 +111,8 @@ def test_process_duplicates_match_wildcard(results = TEST_DATA + TEST_DATA[0:2])
 test_duplicates = (
     test_process_duplicates_raise, 
     test_process_duplicates_flag, 
-    test_process_duplicates_drop, 
+    test_process_duplicates_drop_key,
+    test_process_duplicates_drop_keys, 
     test_process_duplicates_match_wildcard, 
 )
 
@@ -283,24 +295,30 @@ def test_get_documents_by_date_quarters(start = "2022-12-01", end = "2023-02-01"
     assert count == len(results)
     
 
-def test_get_documents_by_date_types(start = "2024-01-01", end = "2024-01-31", types = ["RULE", "PRORULE"]):
+def test_get_documents_by_date_types(
+        start = "2024-01-01", 
+        end = "2024-01-31", 
+        types = ["RULE", "PRORULE"], 
+        type_schema = {
+            "RULE": "Rule", 
+            "PRORULE": "Proposed Rule", 
+            "NOTICE": "Notice", 
+            "PRESDOCU": "Presidential Document"
+            }
+    ):
     results, count = get_documents_by_date(start, end, document_types=types)
     assert isinstance(results, list)
     assert count == len(results)
     res_types = set(doc.get("type") for doc in results)
     assert len(res_types) <= len(types)
-    assert all(1 if t in types else 0 for t in res_types)
+    assert all(1 if r in (type_schema.get(t) for t in types) else 0 for r in res_types)
 
 
-#def test_get_documents_by_date_duplicates(start = "2024-01-01", end = "2024-01-31"):
-#    results, count = get_documents_by_date(start, end)
-    #results + results
-    #assert isinstance(results, list)
-    #assert count == len(results)
-    #res_types = set(doc.get("type") for doc in results)
-    #assert len(res_types) <= len(types)
-    #assert all(1 if t in types else 0 for t in res_types)
-    
+def test_get_documents_by_date_above_max_threshold(start = "2020-01-01", end = "2022-12-31", max = 10000):
+    results, count = get_documents_by_date(start, end)
+    assert count > max
+    assert isinstance(results, list)
+    assert count == len(results)
 
 
 def test_get_documents_by_number(numbers = ["2024-02204", "2023-28203", "2023-25797"]):
@@ -313,6 +331,9 @@ test_get_documents = (
     test_retrieve_results_by_next_page_full, 
     test_retrieve_results_by_next_page_partial, 
     test_get_documents_by_date, 
+    test_get_documents_by_date_quarters, 
+    test_get_documents_by_date_types, 
+    test_get_documents_by_date_above_max_threshold, 
     test_get_documents_by_number, 
     )
 

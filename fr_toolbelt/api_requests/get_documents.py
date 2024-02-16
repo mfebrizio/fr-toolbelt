@@ -4,10 +4,11 @@ from pathlib import Path
 import re
 
 from pandas import DataFrame, read_csv, read_excel
+from progress.bar import Bar
 import requests
 
-from .duplicates import process_duplicates
-from .format_dates import DateFormatter
+from ..utils.duplicates import process_duplicates
+from ..utils.format_dates import DateFormatter
 
 
 BASE_PARAMS = {
@@ -106,7 +107,9 @@ def _retrieve_results_by_next_page(endpoint_url: str, dict_params: dict) -> list
 def _query_documents_endpoint(
         endpoint_url: str, 
         dict_params: dict, 
-        handle_duplicates: bool | str = False
+        handle_duplicates: bool | str = False, 
+        #show_progress: bool = False,
+        **kwargs
     ) -> tuple[list, int]:
     """GET request for documents endpoint.
 
@@ -117,16 +120,19 @@ def _query_documents_endpoint(
     Returns:
         tuple[list, int]: Tuple of API results, count of documents retrieved.
     """    
-    results, count = [], 0
-    response = requests.get(endpoint_url, params=dict_params).json()
+    results, running_count = [], 0
+    response = requests.get(endpoint_url, params=dict_params)
+    #print(res.url)
+    res_json = response.json()
     max_documents_threshold = 10000
+    response_count = res_json["count"]
     
     # handles queries returning no documents
-    if response["count"] == 0:
+    if response_count == 0:
         pass
     
     # handles queries that need multiple requests
-    elif response["count"] > max_documents_threshold:
+    elif response_count > max_documents_threshold:
         
         # get range of dates
         start_date = DateFormatter(dict_params.get("conditions[publication_date][gte]"))
@@ -146,45 +152,50 @@ def _query_documents_endpoint(
         
         # retrieve documents
         dict_params_qrt = deepcopy(dict_params)
-        for year in years:
-            for quarter in quarters:            
-                results_qrt = []
+
+        with Bar(kwargs.get("message", "Years retrieved"), max=len(years)) as bar:
+            for year in years:
+                for quarter in quarters:
+                    
+                    # set start and end dates based on input date
+                    gte = start_date.date_in_quarter(year, quarter, return_quarter_end=False)
+                    lte = end_date.date_in_quarter(year, quarter)
+                    if start_date.greater_than_date(lte):
+                        # skip quarters where start_date is later than last day of quarter
+                        continue
+                    elif end_date.less_than_date(gte):
+                        # skip quarters where end_date is ealier than first day of quarter
+                        break
+                    
+                    # update parameters by quarter
+                    dict_params_qrt.update({
+                        "conditions[publication_date][gte]": f"{gte}", 
+                        "conditions[publication_date][lte]": f"{lte}"
+                                            })
+                    
+                    # get documents
+                    results_qrt = _retrieve_results_by_next_page(endpoint_url, dict_params_qrt)
+                    results.extend(results_qrt)
+                    running_count += len(results_qrt)
+                bar.next()
                 
-                # set start and end dates based on input date
-                gte = start_date.date_in_quarter(year, quarter, return_quarter_end=False)
-                lte = end_date.date_in_quarter(year, quarter)
-                if start_date.greater_than_date(lte):
-                    # skip quarters where start_date is later than last day of quarter
-                    continue
-                elif end_date.less_than_date(gte):
-                    # skip quarters where end_date is ealier than first day of quarter
-                    break
-                
-                # update parameters by quarter
-                dict_params_qrt.update({
-                    "conditions[publication_date][gte]": f"{gte}", 
-                    "conditions[publication_date][lte]": f"{lte}"
-                                        })
-                
-                # get documents
-                results_qrt = _retrieve_results_by_next_page(endpoint_url, dict_params_qrt)
-                results.extend(results_qrt)
-                count += response["count"]
-    
     # handles normal queries
-    elif response["count"] in range(max_documents_threshold + 1):
-        count += response["count"]
+    elif response_count in range(max_documents_threshold + 1):
+        running_count += response_count
         results.extend(_retrieve_results_by_next_page(endpoint_url, dict_params))
     
     # otherwise something went wrong
     else:
-        raise QueryError(f"Query returned document count of {response['count']}.")
-
+        raise QueryError(f"Query returned document count of {response_count}.")
+    
+    if running_count != response_count:
+        raise QueryError(f"Failed to retrieve all {response_count} documents.")
+    
     if not handle_duplicates:
         pass
     else:
-        results = process_duplicates(results, key="document_number", how=handle_duplicates)
-    return results, count
+        results = process_duplicates(results, how=handle_duplicates, keys=("document_number", "citation"))
+    return results, running_count
 
 
 # -- retrieve documents using date range -- #
@@ -196,6 +207,9 @@ def get_documents_by_date(start_date: str,
                           fields: tuple[str] | list[str] = DEFAULT_FIELDS,
                           endpoint_url: str = BASE_URL, 
                           dict_params: dict = BASE_PARAMS, 
+                          handle_duplicates: bool | str = False, 
+                          #show_progress: bool = False,
+                          **kwargs
                           ):
     """Retrieve Federal Register documents using a date range.
 
@@ -223,7 +237,13 @@ def get_documents_by_date(start_date: str,
     if document_types is not None:
         dict_params.update({"conditions[type][]": list(document_types)})
     
-    results, count = _query_documents_endpoint(endpoint_url, dict_params)
+    results, count = _query_documents_endpoint(
+        endpoint_url, 
+        dict_params, 
+        handle_duplicates=handle_duplicates, 
+        #show_progress=show_progress
+        **kwargs
+        )
     return results, count
 
 
