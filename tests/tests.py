@@ -6,11 +6,9 @@ from pathlib import Path
 from requests import get
 
 from fr_toolbelt.api_requests import (
-
     _retrieve_results_by_next_page, 
     get_documents_by_date, 
     get_documents_by_number, 
-
     )
 
 from fr_toolbelt.preprocessing import (
@@ -99,7 +97,7 @@ def test_process_duplicates_match_wildcard(results = TEST_DATA + TEST_DATA[0:2])
     test_error = None
     results_out = None
     try:
-        results_out = process_duplicates(results, "document_number", "test")
+        results_out = process_duplicates(results, "test", key="document_number")
     except ValueError as e:
         test_error = e
         assert isinstance(e, ValueError)
@@ -111,7 +109,7 @@ test_duplicates = (
     test_process_duplicates_raise, 
     test_process_duplicates_flag, 
     test_process_duplicates_drop_key,
-    #test_process_duplicates_drop_dict, 
+    test_process_duplicates_drop_keys, 
     test_process_duplicates_match_wildcard, 
 )
 
@@ -309,26 +307,15 @@ def test_get_documents_by_date_types(
     assert isinstance(results, list)
     assert count == len(results)
     res_types = set(doc.get("type") for doc in results)
-    #print(res_types)
     assert len(res_types) <= len(types)
     assert all(1 if r in (type_schema.get(t) for t in types) else 0 for r in res_types)
 
 
-def test_get_documents_by_date_above_max_threshold(start = "2020-01-01", end = "2022-12-31"):
+def test_get_documents_by_date_above_max_threshold(start = "2020-01-01", end = "2022-12-31", max = 10000):
     results, count = get_documents_by_date(start, end)
+    assert count > max
     assert isinstance(results, list)
     assert count == len(results)
-
-
-#def test_get_documents_by_date_duplicates(start = "2024-01-01", end = "2024-01-31"):
-#    results, count = get_documents_by_date(start, end)
-    #results + results
-    #assert isinstance(results, list)
-    #assert count == len(results)
-    #res_types = set(doc.get("type") for doc in results)
-    #assert len(res_types) <= len(types)
-    #assert all(1 if t in types else 0 for t in res_types)
-    
 
 
 def test_get_documents_by_number(numbers = ["2024-02204", "2023-28203", "2023-25797"]):
