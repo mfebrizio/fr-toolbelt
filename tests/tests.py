@@ -294,14 +294,24 @@ def test_get_documents_by_date_quarters(start = "2022-12-01", end = "2023-02-01"
     assert count == len(results)
     
 
-def test_get_documents_by_date_types(start = "2024-01-01", end = "2024-01-31", types = ["RULE", "PRORULE"]):
+def test_get_documents_by_date_types(
+        start = "2024-01-01", 
+        end = "2024-01-31", 
+        types = ["RULE", "PRORULE"], 
+        type_schema = {
+            "RULE": "Rule", 
+            "PRORULE": "Proposed Rule", 
+            "NOTICE": "Notice", 
+            "PRESDOCU": "Presidential Document"
+            }
+    ):
     results, count = get_documents_by_date(start, end, document_types=types)
     assert isinstance(results, list)
     assert count == len(results)
     res_types = set(doc.get("type") for doc in results)
-    print(res_types)
+    #print(res_types)
     assert len(res_types) <= len(types)
-    assert all(1 if t in types else 0 for t in res_types)
+    assert all(1 if r in (type_schema.get(t) for t in types) else 0 for r in res_types)
 
 
 def test_get_documents_by_date_above_max_threshold(start = "2020-01-01", end = "2022-12-31"):
