@@ -1,4 +1,5 @@
 from collections import Counter
+from itertools import filterfalse
 
 
 class DuplicateError(Exception):
@@ -17,14 +18,16 @@ def identify_duplicates(results: list[dict], key: str = None, keys: tuple | list
         list[dict]: Duplicated items from input list.
     """
     if (key is None) and (keys is not None):
-        keys_list = (tuple((r.get(k) for k in keys)) for r in results)
-        c = Counter(keys_list)
-        #dup_items = [k for k, v in c.items() if v > 1]
-        dup_items = [r for r in results if tuple((r.get(k) for k in keys)) in [k for k, v in c.items() if v > 1]]
+        keys_gen = (tuple((r.get(k) for k in keys)) for r in results)
+        #keys_list_i = ((i, v) for i, v in enumerate(keys_list))
+        c = Counter(keys_gen)
+        dup_counts = [k for k, v in c.items() if v > 1]
+        dup_items = [r for r in results if tuple((r.get(k) for k in keys)) in dup_counts]
     elif (key is not None) and (keys is None):
-        key_list = (r.get(key) for r in results)
-        c = Counter(key_list)
-        dup_items = [r for r in results if r.get(key) in [k for k, v in c.items() if v > 1]]
+        key_gen = (r.get(key) for r in results)
+        c = Counter(key_gen)
+        dup_counts = [k for k, v in c.items() if v > 1]
+        dup_items = [r for r in results if r.get(key) in dup_counts]
     else:
         ValueError("Must pass values to either 'key' or 'keys'.")
     # return output
