@@ -1,8 +1,9 @@
 from collections import Counter
-from itertools import filterfalse
 
 
 class DuplicateError(Exception):
+    """Encountered an error when processing duplicates.
+    """
     pass
 
 
@@ -29,7 +30,7 @@ def identify_duplicates(results: list[dict], key: str = None, keys: tuple | list
         dup_counts = [k for k, v in c.items() if v > 1]
         dup_items = [r for r in results if r.get(key) in dup_counts]
     else:
-        ValueError("Must pass values to either 'key' or 'keys'.")
+        raise ValueError("Must pass values to either 'key' or 'keys'.")
     # return output
     return dup_items
 
@@ -96,8 +97,11 @@ def process_duplicates(
     ):
     """Process duplicates. Options include "raise", "flag", and "drop". 
     """
-    duplicates = identify_duplicates(results, key=key, keys=keys)
-    count_dups = len(duplicates)
+    if True: #any(k is not None for k in (key, keys)):
+        duplicates = identify_duplicates(results, key=key, keys=keys)
+        count_dups = len(duplicates)
+    #else:
+    #    raise ValueError("Must pass value for either 'key' or 'keys'.")
     if count_dups > 0:
         if not isinstance(how, str):
             raise TypeError
@@ -111,7 +115,7 @@ def process_duplicates(
                 if report_drop:
                     print(f"Removed {removed} duplicates")
             case _:
-                raise ValueError
+                raise ValueError("Invalid input for 'how' parameter.")
     else:
         res = results
     return res
