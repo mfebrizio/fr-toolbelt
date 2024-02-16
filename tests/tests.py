@@ -299,8 +299,15 @@ def test_get_documents_by_date_types(start = "2024-01-01", end = "2024-01-31", t
     assert isinstance(results, list)
     assert count == len(results)
     res_types = set(doc.get("type") for doc in results)
+    print(res_types)
     assert len(res_types) <= len(types)
     assert all(1 if t in types else 0 for t in res_types)
+
+
+def test_get_documents_by_date_above_max_threshold(start = "2020-01-01", end = "2022-12-31"):
+    results, count = get_documents_by_date(start, end)
+    assert isinstance(results, list)
+    assert count == len(results)
 
 
 #def test_get_documents_by_date_duplicates(start = "2024-01-01", end = "2024-01-31"):
@@ -324,6 +331,9 @@ test_get_documents = (
     test_retrieve_results_by_next_page_full, 
     test_retrieve_results_by_next_page_partial, 
     test_get_documents_by_date, 
+    test_get_documents_by_date_quarters, 
+    test_get_documents_by_date_types, 
+    test_get_documents_by_date_above_max_threshold, 
     test_get_documents_by_number, 
     )
 
