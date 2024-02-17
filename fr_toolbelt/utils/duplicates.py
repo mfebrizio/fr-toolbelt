@@ -76,7 +76,14 @@ def remove_duplicates(results: list[dict], key: str = None, keys: tuple | list =
     return res, (initial_count - filtered_count)
 
 
-def flag_duplicates(results: list[dict], duplicates: list[dict] = None, key: str = None, keys: tuple | list = None):
+def flag_duplicates(
+        results: list[dict], 
+        duplicates: list[dict] = None, 
+        key: str = None, 
+        keys: tuple | list = None
+    ) -> list[dict]:
+    """Flag duplicate documents based one or more key: value pairs.
+    """
     if duplicates is None:
         duplicates = identify_duplicates(results, key=key, keys=keys)
     if (key is None) and (keys is not None):  # multiple keys
@@ -97,8 +104,8 @@ def process_duplicates(
         key: str = None, 
         keys: tuple | list = None, 
         report_drop: bool = False
-    ):
-    """Process duplicates. Options include "raise", "flag", and "drop". 
+    ) -> list[dict]:
+    """Process duplicates based on one or more key: value pairs. Options include "raise", "flag", and "drop". 
     """
     duplicates = identify_duplicates(results, key=key, keys=keys)
     count_dups = len(duplicates)
