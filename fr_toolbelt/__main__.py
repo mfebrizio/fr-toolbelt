@@ -58,7 +58,7 @@ def main():
 
 
 if __name__ == "__main__":
-    print("Running this package as a script from the command line provides a quick way to test its functionality.")
+    print("Executing this package as a module from the command line provides a quick way to test its functionality.")
     proceed = input("Would you like to proceed? [yes/no] >>> ").lower()
     while True:
         if proceed in ("yes", "y"):
