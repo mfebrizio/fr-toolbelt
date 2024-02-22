@@ -9,6 +9,7 @@ version = "0.1.0"
 dependencies = [
   "requests>=2.31",
   "pandas>=1.5",
+  "progress>=1.6",
 ]
 requires-python = ">= 3.10"
 authors = [
@@ -34,5 +35,6 @@ classifiers = [
 Repository = "https://github.com/regulatorystudies/fr-toolbelt.git"
 Issues = "https://github.com/regulatorystudies/fr-toolbelt/issues"
 
-[tool.setuptools.packages]
-find = {} 
+[tool.setuptools.packages.find]
+include = ["fr*"]
+namespaces = false
