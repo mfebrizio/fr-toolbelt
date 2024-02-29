@@ -44,7 +44,7 @@ def process_documents(
         }
     
     # process documents
-    if (which == "all") or ("all" in which):
+    if (which == "all") or ("all" in which and isinstance(which, (list, tuple))):
     
         for field, function in process_fields.items():
             if field == "agencies":
