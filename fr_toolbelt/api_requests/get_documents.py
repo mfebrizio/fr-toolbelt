@@ -4,12 +4,15 @@ from pathlib import Path
 import re
 
 from pandas import DataFrame, read_csv, read_excel
-from progress.bar import Bar
 import requests
 
 from ..utils.duplicates import process_duplicates
 from ..utils.format_dates import DateFormatter
 
+# get patched version of progress bar
+from ..utils.patch_progress import getpatchedprogress
+progress = getpatchedprogress()
+from progress.bar import Bar
 
 BASE_PARAMS = {
     "per_page": 1000, 
