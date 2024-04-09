@@ -391,7 +391,7 @@ def test_agencies_data_init(
     assert len(agency_data.schema) == 3
 
 
-def test_agencies_data_process(
+def test_agencies_data_process_defaults(
         documents = TEST_DATA, 
         metadata = TEST_METADATA, 
         schema = TEST_SCHEMA, 
@@ -408,6 +408,39 @@ def test_agencies_data_process(
         assert key not in processed_keys, f"Failed to delete keys: {key=}"
 
 
+def test_agencies_data_process_return_format_str(
+        documents = TEST_DATA, 
+        metadata = TEST_METADATA, 
+        schema = TEST_SCHEMA, 
+        check_keys = ("agency_slugs", "parent_", "subagency_", "independent_reg_agency")
+):
+    agency_data = AgencyData(documents=documents, metadata=metadata, schema=schema)
+    processed = agency_data.process_data(return_format="short_name")
+    assert isinstance(processed, list)
+    assert len(processed) > 0
+    processed_keys = set((k for d in processed for k in d))
+    for key in check_keys:
+        assert any(pk.startswith(key) for pk in processed_keys), f"Output missing {key=}"
+    for key in agency_data.field_keys:
+        assert key not in processed_keys, f"Failed to delete keys: {key=}"
+
+
+def test_agencies_data_process_return_format_tuple(
+        documents = TEST_DATA, 
+        metadata = TEST_METADATA, 
+        schema = TEST_SCHEMA, 
+        check_keys = ("agency_slugs", "parent_", "subagency_", "independent_reg_agency")
+):
+    agency_data = AgencyData(documents=documents, metadata=metadata, schema=schema)
+    processed = agency_data.process_data(return_format=("short_name", "slug"))
+    assert isinstance(processed, list)
+    assert len(processed) > 0
+    processed_keys = set((k for d in processed for k in d))
+    for key in check_keys:
+        assert any(pk.startswith(key) for pk in processed_keys), f"Output missing {key=}"
+    for key in agency_data.field_keys:
+        assert key not in processed_keys, f"Failed to delete keys: {key=}"
+
 
 test_agencies = (
     test_agencies_metadata_init, 
@@ -415,7 +448,9 @@ test_agencies = (
     test_agencies_metadata_save_metadata, 
     test_agencies_metadata_save_schema, 
     test_agencies_data_init, 
-    test_agencies_data_process, 
+    test_agencies_data_process_defaults, 
+    test_agencies_data_process_return_format_str, 
+    test_agencies_data_process_return_format_tuple, 
 )
 
 

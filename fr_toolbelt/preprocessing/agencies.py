@@ -207,7 +207,7 @@ class AgencyData:
             list[str]: List of converted values for assigning to DataFrame series.
         """
         if isinstance(input_values, (list, tuple, set, GeneratorType)):
-            return_value = sep.join(input_values)
+            return_value = sep.join(i for i in input_values if i is not None)
         elif isinstance(input_values, (int, float)):
             return_value = f"{input_values}"
         else:
@@ -247,7 +247,7 @@ class AgencyData:
             self, 
             document: dict, 
             slug_key: str = "agency_slugs", 
-            return_format: str = None, 
+            return_format: str | tuple | list | None = "slug", 
             return_values_as_str: bool = True, 
             identify_ira: bool = True
         ):
@@ -257,28 +257,35 @@ class AgencyData:
         Args:
             document (dict): Federal Register document.
             slug_key (str, optional): Dictionary key containing agency slugs. Defaults to "agency_slugs".
-            return_format (str, optional): Format of returned data (e.g., slug, numeric id, short name/acronym, name). Defaults to None.
+            return_format (str, optional): Format of returned data (e.g., slug, numeric id, short name/acronym, name). Defaults to "slug".
             return_values_as_str (bool, optional): Return values as a str; otherwise returns a list. Defaults to True.
             identify_ira (bool, optional): Agency slugs contain an independent regulatory agency. Defaults to True.
         """
         if return_format is None:
-            return_format = "slug"
+            return_format = ("slug", )
+        elif isinstance(return_format, str):
+            return_format = (return_format, )
+        elif isinstance(return_format, (tuple, list)):
+            pass
+        else:
+            raise TypeError("Parameter 'return_format' must be `str`, `tuple`, `list`, or `None`.")
         document_copy = document.copy()
         slugs = document_copy.get(slug_key)
-        parents = (self.__get_agency_info(slug, return_format) for slug in slugs if slug in self.schema.get("parents"))
-        subagencies = (self.__get_agency_info(slug, return_format) for slug in slugs if slug in self.schema.get("subagencies"))
         if identify_ira:
-            document_copy["independent_reg_agency"] = self.__identify_independent_reg_agencies(slugs)
-        if return_values_as_str:
-            document_copy.update({
-                f"parent_{return_format}": self.__return_values_as_str(parents), 
-                f"subagency_{return_format}": self.__return_values_as_str(subagencies), 
-                })
-        else:
-            document_copy.update({
-                f"parent_{return_format}": list(parents), 
-                f"subagency_{return_format}": list(subagencies), 
-                })
+                document_copy["independent_reg_agency"] = self.__identify_independent_reg_agencies(slugs)
+        for fmt in return_format:
+            parents = (self.__get_agency_info(slug, return_format) for slug in slugs if slug in self.schema.get("parents"))
+            subagencies = (self.__get_agency_info(slug, return_format) for slug in slugs if slug in self.schema.get("subagencies"))
+            if return_values_as_str:
+                document_copy.update({
+                    f"parent_{fmt}": self.__return_values_as_str(parents), 
+                    f"subagency_{fmt}": self.__return_values_as_str(subagencies), 
+                    })
+            else:
+                document_copy.update({
+                    f"parent_{fmt}": list(parents), 
+                    f"subagency_{fmt}": list(subagencies), 
+                    })
         return document_copy
     
     def __identify_independent_reg_agencies(
@@ -323,14 +330,14 @@ class AgencyData:
     
     def process_data(
             self, 
-            return_format: str = None, 
+            return_format: str | tuple | list | None = None, 
             return_values_as_str: bool = True, 
             identify_ira: bool = True
         ) -> list[dict]:
         """Process agency data for each document.
 
         Args:
-            return_format (str, optional): Format of returned data (e.g., slug, numeric id, short name/acronym, name). Defaults to None.
+            return_format (str | tuple | list | None, optional): Format of returned data (e.g., slug, numeric id, short name/acronym, name). Defaults to None.
 
         Returns:
             list[dict]: List of processed documents.
