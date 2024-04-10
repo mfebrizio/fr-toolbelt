@@ -274,8 +274,8 @@ class AgencyData:
         if identify_ira:
                 document_copy["independent_reg_agency"] = self.__identify_independent_reg_agencies(slugs)
         for fmt in return_format:
-            parents = (self.__get_agency_info(slug, return_format) for slug in slugs if slug in self.schema.get("parents"))
-            subagencies = (self.__get_agency_info(slug, return_format) for slug in slugs if slug in self.schema.get("subagencies"))
+            parents = (self.__get_agency_info(slug, fmt) for slug in slugs if slug in self.schema.get("parents"))
+            subagencies = (self.__get_agency_info(slug, fmt) for slug in slugs if slug in self.schema.get("subagencies"))
             if return_values_as_str:
                 document_copy.update({
                     f"parent_{fmt}": self.__return_values_as_str(parents), 
