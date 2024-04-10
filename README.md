@@ -1,5 +1,8 @@
 # fr-toolbelt
 
+[![PyPI - Version](https://img.shields.io/pypi/v/fr-toolbelt?color=033C5A)](https://pypi.org/project/fr-toolbelt/)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/fr-toolbelt?color=AA9868)
+
 Toolbelt of classes and functions written in Python to use with the [Federal Register API](https://www.federalregister.gov/developers/documentation/api/v1). The Federal Register (FR) is the daily journal of the U.S. government, containing rules, proposed rules, notices, and presidential documents from federal agencies.
 
 Name inspired by the [Requests Toolbelt](https://github.com/requests/toolbelt) package. "FR" is a common shorthand for the Federal Register, in part because document citations take the form of VOLUME FR STARTPAGE (e.g., [88 FR 21879](https://www.federalregister.gov/d/2023-07760)).
