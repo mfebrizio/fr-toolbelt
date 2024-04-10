@@ -1,4 +1,5 @@
 from datetime import date
+from itertools import product
 import json
 from pathlib import Path
 #from pprint import pprint
@@ -412,15 +413,18 @@ def test_agencies_data_process_return_format_str(
         documents = TEST_DATA, 
         metadata = TEST_METADATA, 
         schema = TEST_SCHEMA, 
-        check_keys = ("agency_slugs", "parent_", "subagency_", "independent_reg_agency")
+        check_keys = ("agency_slugs", "independent_reg_agency", ), 
+        check_prefixes = ("parent_", "subagency_", ), 
+        return_format="short_name", 
 ):
     agency_data = AgencyData(documents=documents, metadata=metadata, schema=schema)
-    processed = agency_data.process_data(return_format="short_name")
+    processed = agency_data.process_data(return_format=return_format)
     assert isinstance(processed, list)
     assert len(processed) > 0
     processed_keys = set((k for d in processed for k in d))
-    for key in check_keys:
-        assert any(pk.startswith(key) for pk in processed_keys), f"Output missing {key=}"
+    checks = list(check_keys) + [f"{p[0]}{p[1]}" for p in product(check_prefixes, (return_format, ))]
+    for key in checks:
+        assert key in processed_keys, f"Output missing {key=}"
     for key in agency_data.field_keys:
         assert key not in processed_keys, f"Failed to delete keys: {key=}"
 
@@ -429,15 +433,18 @@ def test_agencies_data_process_return_format_tuple(
         documents = TEST_DATA, 
         metadata = TEST_METADATA, 
         schema = TEST_SCHEMA, 
-        check_keys = ("agency_slugs", "parent_", "subagency_", "independent_reg_agency")
+        check_keys = ("agency_slugs", "independent_reg_agency", ), 
+        check_prefixes = ("parent_", "subagency_", ), 
+        return_format=("short_name", "slug", ), 
 ):
     agency_data = AgencyData(documents=documents, metadata=metadata, schema=schema)
-    processed = agency_data.process_data(return_format=("short_name", "slug"))
+    processed = agency_data.process_data(return_format=return_format)
     assert isinstance(processed, list)
     assert len(processed) > 0
     processed_keys = set((k for d in processed for k in d))
-    for key in check_keys:
-        assert any(pk.startswith(key) for pk in processed_keys), f"Output missing {key=}"
+    checks = list(check_keys) + [f"{p[0]}{p[1]}" for p in product(check_prefixes, return_format)]
+    for key in checks:
+        assert key in processed_keys, f"Output missing {key=}"
     for key in agency_data.field_keys:
         assert key not in processed_keys, f"Failed to delete keys: {key=}"
 
