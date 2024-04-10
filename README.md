@@ -9,7 +9,7 @@ Name inspired by the [Requests Toolbelt](https://github.com/requests/toolbelt) p
 Install using pip:
 
 ```bash
-pip install git+https://github.com/regulatorystudies/fr-toolbelt.git
+pip install fr-toolbelt
 ```
 
 This package was developed with Python 3.12 and requires Python 3.10 or higher.
