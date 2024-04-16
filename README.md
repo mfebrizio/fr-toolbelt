@@ -27,13 +27,13 @@ python -m fr_toolbelt
 
 Generally, you'll want to import specific classes or functions to meet your project's needs. More on what each module offers below.
 
-The FR toolbelt contains two modules:
+The FR toolbelt package contains several modules:
 
 - `api_requests` for requesting documents from the Federal Register API.
 - `preprocessing` for processing Federal Register documents to further analyze.
 - `utils` for providing utility classes and functions to the other modules
 
-### API requests module
+### fr_toolbelt.api_requests module
 
 The `api_requests` module makes it easy to retrieve FR documents from the API by specifying a date range or providing a list of document numbers (`document_number` is the unique identifier for each document).
 
@@ -66,7 +66,7 @@ fields = ["document_number", "publication_date", "raw_text_url"]
 results, count = get_documents_by_date(start, end, fields=fields)
 ```
 
-More customization is possible by examining the parameters and docstrings. Note that this function works around the maximum of 10,000 results per search by querying smaller subsets of documents and compiling them into a larger result set. So retrieving all [28,308 documents published in 2020](https://www.federalregister.gov/api/v1/documents.json?conditions[publication_date][year]=2020&per_page=1000) is now possible with a single function call.
+More customization is possible by examining the parameters and docstrings. Note that the `get_documents_by_date` function works around the FR API's maximum of 10,000 results per search by querying smaller subsets of documents and compiling them into a larger result set. So retrieving all [28,308 documents published in 2020](https://www.federalregister.gov/api/v1/documents.json?conditions[publication_date][year]=2020&per_page=1000) is now possible with a single function call.
 
 To collect a particular set of documents, pass their document numbers as a parameter.
 
@@ -79,7 +79,7 @@ results, count = get_documents_by_number(document_numbers)
 
 The `api_requests` module may add support for endpoints other than the documents endpoint at a future point.
 
-### Preprocessing module
+### fr_toolbelt.preprocessing module
 
 The `preprocessing` module handles common tasks to process the API data in a usable format. Below is an example of what the raw API data look like for a single illustrative document. Notice how fields like "agencies" and "regulation_id_number_info" are nested data structures that are difficult to use in their raw form.
 
@@ -238,6 +238,6 @@ processed_docs = process_documents(results, which=("agencies", "presidents"), de
  'type': 'Notice'}
 ```
 
-### Utils module
+### fr_toolbelt.utils module
 
-These functions handle date formatting under the hood and provide functionality for identifying and removing duplicate entries (not a current bug in the API if using the order=oldest or order=newest parameter).
+These functions handle date formatting under the hood and provide functionality for identifying and removing duplicate entries (not a current bug in the FR API if passing the order=oldest or order=newest parameter in a request).
