@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import datetime, date, timedelta
 from itertools import product
 import json
 from pathlib import Path
@@ -322,11 +322,19 @@ def test_get_documents_by_date_above_max_threshold(start = "2020-01-01", end = "
     assert count == len(results)
 
 
-def test_get_documents_by_date_no_end_date(start = "2023-01-01"):
-    results, count = get_documents_by_date(start)
+def test_get_documents_by_date_no_end_date(delta = 365):
+    start = (datetime.now() - timedelta(delta)).date()
+    test_error = "will remain string if error is not handled in try/except block"
+    try:
+        results, count = get_documents_by_date(start)
+    except TypeError as err:
+        test_error = err
+        results, count = get_documents_by_date(start, end_date=date.today())
+    max_date = max(date.fromisoformat(r.get("publication_date")) for r in results)
+    assert isinstance(test_error, str), "Error was handled in try/except block; bug remains in program"
+    assert max_date == date.today()
     assert isinstance(results, list)
     assert count == len(results)
-    print(count)
 
 
 def test_get_documents_by_number(numbers = ["2024-02204", "2023-28203", "2023-25797"]):
