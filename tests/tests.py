@@ -322,6 +322,13 @@ def test_get_documents_by_date_above_max_threshold(start = "2020-01-01", end = "
     assert count == len(results)
 
 
+def test_get_documents_by_date_no_end_date(start = "2023-01-01"):
+    results, count = get_documents_by_date(start)
+    assert isinstance(results, list)
+    assert count == len(results)
+    print(count)
+
+
 def test_get_documents_by_number(numbers = ["2024-02204", "2023-28203", "2023-25797"]):
     results, count = get_documents_by_number(numbers)
     assert isinstance(results, list)
@@ -335,6 +342,7 @@ test_get_documents = (
     test_get_documents_by_date_quarters, 
     test_get_documents_by_date_types, 
     test_get_documents_by_date_above_max_threshold, 
+    test_get_documents_by_date_no_end_date, 
     test_get_documents_by_number, 
     )
 
