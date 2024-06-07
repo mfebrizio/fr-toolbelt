@@ -139,15 +139,11 @@ def _query_documents_endpoint(
         
         # get range of dates
         start_date = DateFormatter(dict_params.get("conditions[publication_date][gte]"))
-        end_date = DateFormatter(dict_params.get("conditions[publication_date][lte]"))
+        end_date = DateFormatter(dict_params.get("conditions[publication_date][lte]", f"{date.today()}"))
         
         # set range of years
         start_year = start_date.get_year()
-        if end_date is None:
-            end_date = date.today()
-            end_year = end_date.year
-        else:
-            end_year = end_date.get_year()
+        end_year = end_date.get_year()
         years = range(start_year, end_year + 1)
         
         # format: YYYY-MM-DD
