@@ -125,7 +125,7 @@ def _query_documents_endpoint(
     """    
     results, running_count = [], 0
     response = requests.get(endpoint_url, params=dict_params)
-    #print(res.url)
+    #print(response.url)
     res_json = response.json()
     max_documents_threshold = 10000
     response_count = res_json["count"]
@@ -200,8 +200,8 @@ def _query_documents_endpoint(
 # -- retrieve documents using date range -- #
 
 
-def get_documents_by_date(start_date: str, 
-                          end_date: str = None, 
+def get_documents_by_date(start_date: str | date, 
+                          end_date: str | date | None = None, 
                           document_types: tuple | list = None,
                           fields: tuple[str] | list[str] = DEFAULT_FIELDS,
                           endpoint_url: str = BASE_URL, 
@@ -223,22 +223,23 @@ def get_documents_by_date(start_date: str,
     Returns:
         tuple[list, int]: Tuple of API results, count of documents retrieved.
     """
+    params = dict_params.copy()
     # update dictionary of parameters
-    dict_params.update({
+    params.update({
         "conditions[publication_date][gte]": f"{start_date}", 
         "fields[]": fields
         })
     
     # empty strings "" are falsey in Python: https://docs.python.org/3/library/stdtypes.html#truth-value-testing
     if end_date:
-        dict_params.update({"conditions[publication_date][lte]": f"{end_date}"})
+        params.update({"conditions[publication_date][lte]": f"{end_date}"})
     
     if document_types is not None:
-        dict_params.update({"conditions[type][]": list(document_types)})
+        params.update({"conditions[type][]": list(document_types)})
     
     results, count = _query_documents_endpoint(
         endpoint_url, 
-        dict_params, 
+        params, 
         handle_duplicates=handle_duplicates, 
         #show_progress=show_progress
         **kwargs
