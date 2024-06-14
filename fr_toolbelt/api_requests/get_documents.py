@@ -48,6 +48,10 @@ class QueryError(Exception):
     pass
 
 
+class InputFileError(Exception):
+    pass
+
+
 def _retrieve_results_by_page_range(num_pages: int, endpoint_url: str, dict_params: dict) -> list:
     """Retrieve documents by looping over a given number of pages.
 
@@ -311,7 +315,10 @@ def parse_document_numbers(path: Path):
     Returns:
         list: List of document numbers.
     """    
-    file = next(p for p in path.iterdir() if (p.is_file() and p.name != ".gitignore"))
+    try:
+        file = next(p for p in path.iterdir() if (p.is_file() and p.name != ".gitignore"))
+    except StopIteration as err:
+        raise InputFileError("Missing input file with document numbers.")
     if file.suffix in (".csv", ".txt", ".tsv"):
         with open(file, "r") as f:
             df = read_csv(f)
@@ -319,6 +326,6 @@ def parse_document_numbers(path: Path):
         with open(file, "rb") as f:
             df = read_excel(f)
     else:
-        raise ValueError("Input file must be CSV or Excel spreadsheet.")
+        raise InputFileError("Input file must be in CSV or Excel spreadsheet.")
     
     return _extract_document_numbers(df)
