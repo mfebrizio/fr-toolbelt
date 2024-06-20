@@ -41,5 +41,6 @@ Issues = "https://github.com/regulatorystudies/fr-toolbelt/issues"
 version = {attr = "package.__version__"}
 
 [tool.setuptools.packages.find]
-include = ["src/"]
+where = ["src"]
+include = ["fr*"]
 namespaces = false
