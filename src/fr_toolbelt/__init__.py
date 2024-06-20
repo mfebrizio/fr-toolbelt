@@ -9,7 +9,7 @@ from fr_toolbelt import preprocessing
 from fr_toolbelt import utils
 
 __title__ = "fr-toolbelt"
-__version__ = "0.1.0"
+__version__ = "0.1.2"
 
 __all__ = [
     "api_requests", 
