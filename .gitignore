@@ -1,6 +1,7 @@
 # project-specific
 data/
 testing.py
+.dev/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
