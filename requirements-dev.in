@@ -1,0 +1,14 @@
+# see venv .dev
+
+# build and distribute via pypi
+build
+twine
+
+# testing
+pytest
+
+# lib
+numpy
+pandas
+progress
+requests
