@@ -1,0 +1,15 @@
+# see venv .dev
+
+# build and distribute via pypi
+build
+twine>=5.1.1
+
+# testing
+pytest
+
+# lib
+cursor
+numpy>=1.20, <2.0
+pandas>=1.5
+progress>=1.6
+requests>=2.32
