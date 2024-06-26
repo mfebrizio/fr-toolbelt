@@ -211,7 +211,6 @@ def get_documents_by_date(start_date: str | date,
                           endpoint_url: str = BASE_URL, 
                           dict_params: dict = BASE_PARAMS, 
                           handle_duplicates: bool | str = False, 
-                          #show_progress: bool = False,
                           **kwargs
                           ):
     """Retrieve Federal Register documents using a date range.
@@ -245,7 +244,6 @@ def get_documents_by_date(start_date: str | date,
         endpoint_url, 
         params, 
         handle_duplicates=handle_duplicates, 
-        #show_progress=show_progress
         **kwargs
         )
     return results, count
@@ -290,6 +288,7 @@ def _extract_document_numbers(
         df (DataFrame): Input data.
         pattern (str, optional): Regex pattern for identifying document numbers from url. 
         Defaults to r"(?:[a-z]\d-)?[\w|\d]{2,4}-[\d]{5,}".
+        alt_column (str, optional): Alternate column to search for document numbers. Defaults to "html_url".
 
     Returns:
         list[str]: List of document numbers.
@@ -303,14 +302,15 @@ def _extract_document_numbers(
     return document_numbers
 
 
-def parse_document_numbers(path: Path):
+def parse_document_numbers(path: Path, alt_column: str = "html_url"):
     """Parse Federal Register document numbers from input data file.
 
     Args:
         path (Path): Path to input file.
+        alt_column (str, optional): Alternate column to search for document numbers. Defaults to "html_url".
 
     Raises:
-        ValueError: Raises error when input file is not CSV or Excel spreadsheet.
+        InputFileError: Raises error when input file is not in right format or does not exist.
 
     Returns:
         list: List of document numbers.
@@ -318,7 +318,9 @@ def parse_document_numbers(path: Path):
     try:
         file = next(p for p in path.iterdir() if (p.is_file() and p.name != ".gitignore"))
     except StopIteration as err:
+        print(f"Handled exception: {err}")
         raise InputFileError("Missing input file with document numbers.")
+    
     if file.suffix in (".csv", ".txt", ".tsv"):
         with open(file, "r") as f:
             df = read_csv(f)
@@ -326,6 +328,6 @@ def parse_document_numbers(path: Path):
         with open(file, "rb") as f:
             df = read_excel(f)
     else:
-        raise InputFileError("Input file must be in CSV or Excel spreadsheet.")
+        raise InputFileError("Input file must be in CSV or Excel spreadsheet format.")
     
-    return _extract_document_numbers(df)
+    return _extract_document_numbers(df, alt_column=alt_column)
