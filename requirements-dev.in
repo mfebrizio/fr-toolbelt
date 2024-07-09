@@ -1,5 +1,8 @@
 # see venv .dev
 
+# constrain by non-dev requirements
+-c requirements.txt
+
 # build and distribute via pypi
 build
 twine>=5.1.1

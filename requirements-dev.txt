@@ -7,19 +7,27 @@
 build==1.2.1
     # via -r requirements-dev.in
 certifi==2024.7.4
-    # via requests
+    # via
+    #   -c requirements.txt
+    #   requests
 charset-normalizer==3.3.2
-    # via requests
+    # via
+    #   -c requirements.txt
+    #   requests
 colorama==0.4.6
     # via
     #   build
     #   pytest
 cursor==1.3.5
-    # via -r requirements-dev.in
+    # via
+    #   -c requirements.txt
+    #   -r requirements-dev.in
 docutils==0.21.2
     # via readme-renderer
 idna==3.7
-    # via requests
+    # via
+    #   -c requirements.txt
+    #   requests
 importlib-metadata==7.2.0
     # via twine
 iniconfig==2.0.0
@@ -44,6 +52,7 @@ nh3==0.2.17
     # via readme-renderer
 numpy==1.26.4
     # via
+    #   -c requirements.txt
     #   -r requirements-dev.in
     #   pandas
 packaging==24.1
@@ -51,13 +60,17 @@ packaging==24.1
     #   build
     #   pytest
 pandas==2.2.2
-    # via -r requirements-dev.in
+    # via
+    #   -c requirements.txt
+    #   -r requirements-dev.in
 pkginfo==1.10.0
     # via twine
 pluggy==1.5.0
     # via pytest
 progress==1.6
-    # via -r requirements-dev.in
+    # via
+    #   -c requirements.txt
+    #   -r requirements-dev.in
 pygments==2.18.0
     # via
     #   readme-renderer
@@ -67,15 +80,20 @@ pyproject-hooks==1.1.0
 pytest==8.2.2
     # via -r requirements-dev.in
 python-dateutil==2.9.0.post0
-    # via pandas
+    # via
+    #   -c requirements.txt
+    #   pandas
 pytz==2024.1
-    # via pandas
+    # via
+    #   -c requirements.txt
+    #   pandas
 pywin32-ctypes==0.2.2
     # via keyring
 readme-renderer==43.0
     # via twine
 requests==2.32.3
     # via
+    #   -c requirements.txt
     #   -r requirements-dev.in
     #   requests-toolbelt
     #   twine
@@ -86,13 +104,18 @@ rfc3986==2.0.0
 rich==13.7.1
     # via twine
 six==1.16.0
-    # via python-dateutil
+    # via
+    #   -c requirements.txt
+    #   python-dateutil
 twine==5.1.1
     # via -r requirements-dev.in
 tzdata==2024.1
-    # via pandas
+    # via
+    #   -c requirements.txt
+    #   pandas
 urllib3==2.2.2
     # via
+    #   -c requirements.txt
     #   requests
     #   twine
 zipp==3.19.2
