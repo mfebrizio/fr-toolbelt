@@ -38,8 +38,8 @@ test = [
 ]
 
 [project.urls]
-Repository = "https://github.com/regulatorystudies/fr-toolbelt.git"
-Issues = "https://github.com/regulatorystudies/fr-toolbelt/issues"
+Repository = "https://github.com/mfebrizio/fr-toolbelt.git"
+Issues = "https://github.com/mfebrizio/fr-toolbelt/issues"
 
 [tool.setuptools.dynamic]
 version = {attr = "fr_toolbelt.__version__"}
