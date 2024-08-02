@@ -12,7 +12,7 @@ pytest
 
 # lib
 cursor
-numpy>=1.20, <2.0
+numpy>=1.20, <3.0
 pandas>=1.5
 progress>=1.6
 requests>=2.32
