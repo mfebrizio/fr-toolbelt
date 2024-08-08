@@ -72,13 +72,14 @@ def sleep_retry(timeout: int, retry: int = 3):
                     else:
                         raise QueryError
                 except (requests.HTTPError, requests.JSONDecodeError, ):
-                    print(f'Sleeping for {timeout} seconds')
+                    #print(f'Sleeping for {timeout} seconds')
                     time.sleep(timeout)
                     retries += 1
         return wrapper
     return retry_decorator
 
 
+@sleep_retry(60, retry=5)
 def _retrieve_results_by_page_range(num_pages: int, endpoint_url: str, dict_params: dict) -> list:
     """Retrieve documents by looping over a given number of pages.
 
@@ -102,6 +103,7 @@ def _retrieve_results_by_page_range(num_pages: int, endpoint_url: str, dict_para
     return results, count
 
 
+@sleep_retry(60, retry=5)
 def _retrieve_results_by_next_page(endpoint_url: str, dict_params: dict) -> list:
     """Retrieve documents by accessing "next_page_url" returned by each request.
 
@@ -137,7 +139,7 @@ def _retrieve_results_by_next_page(endpoint_url: str, dict_params: dict) -> list
     
     return results
 
-@sleep_retry(60, retry=5)
+
 def _query_documents_endpoint(
         endpoint_url: str, 
         dict_params: dict, 
