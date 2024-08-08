@@ -2,6 +2,7 @@ from copy import deepcopy
 from datetime import date
 from pathlib import Path
 import re
+import time
 
 from pandas import DataFrame, read_csv, read_excel
 import requests
@@ -50,6 +51,32 @@ class QueryError(Exception):
 
 class InputFileError(Exception):
     pass
+
+
+def sleep_retry(timeout: int, retry: int = 3):
+    """Decorator to sleep and retry request when receiving an error 
+    (source: [RealPython](https://realpython.com/python-sleep/#adding-a-python-sleep-call-with-decorators)).
+
+    Args:
+        timeout (int): Number of seconds to sleep after error.
+        retry (int, optional): Number of times to retry. Defaults to 3.
+    """    
+    def retry_decorator(function):
+        def wrapper(*args, **kwargs):
+            retries = 0
+            while retries < retry:
+                try:
+                    value = function(*args, **kwargs)
+                    if value is not None:
+                        return value
+                    else:
+                        raise QueryError
+                except (requests.HTTPError, requests.JSONDecodeError, ):
+                    print(f'Sleeping for {timeout} seconds')
+                    time.sleep(timeout)
+                    retries += 1
+        return wrapper
+    return retry_decorator
 
 
 def _retrieve_results_by_page_range(num_pages: int, endpoint_url: str, dict_params: dict) -> list:
@@ -110,12 +137,11 @@ def _retrieve_results_by_next_page(endpoint_url: str, dict_params: dict) -> list
     
     return results
 
-
+@sleep_retry(60, retry=5)
 def _query_documents_endpoint(
         endpoint_url: str, 
         dict_params: dict, 
         handle_duplicates: bool | str = False, 
-        #show_progress: bool = False,
         **kwargs
     ) -> tuple[list, int]:
     """GET request for documents endpoint.
