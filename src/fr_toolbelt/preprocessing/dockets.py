@@ -9,7 +9,7 @@ class RegsDotGovData(FieldData):
                  documents: list[dict], 
                  field_key: str = "regulations_dot_gov_info",
                  subfield_key: str = "docket_id", 
-                 value_key: str = None
+                 value_key: str | None = None
                  ) -> None:
         super().__init__(documents=documents, field_key=field_key, subfield_key=subfield_key)
         if value_key is None:
