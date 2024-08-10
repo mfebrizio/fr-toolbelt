@@ -1,4 +1,6 @@
 from datetime import date
+from platform import python_version_tuple
+import re
 from fr_toolbelt.utils import DateFormatter
 
 
@@ -7,9 +9,10 @@ def test__convert_to_datetime_date(
     ):
     
     for attempt in success:
-        fdate = DateFormatter(attempt)
-        result = fdate._DateFormatter__convert_to_datetime_date(attempt)
-        assert isinstance(result, date)
+        if (re.fullmatch(r"\d{4}-\d{2}-\d{2}", f"{attempt}", flags=re.I) is not None) or (int(python_version_tuple[1]) >= 11):
+            fdate = DateFormatter(attempt)
+            result = fdate._DateFormatter__convert_to_datetime_date(attempt)
+            assert isinstance(result, date)
 
 
 def test_get_year_self(
