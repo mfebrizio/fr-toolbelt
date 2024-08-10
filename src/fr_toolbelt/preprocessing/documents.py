@@ -12,7 +12,7 @@ def process_documents(
         documents: list[dict], 
         which: str | list | tuple = "all", 
         docket_data_source: str = "dockets", 
-        del_keys: str | list | tuple = None, 
+        del_keys: str | list | tuple | None = None, 
         **kwargs
     ) -> list[dict]:
     """Process one or more fields in each document.

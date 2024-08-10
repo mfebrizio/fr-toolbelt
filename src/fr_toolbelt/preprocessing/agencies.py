@@ -36,7 +36,7 @@ class AgencyMetadata:
     Args:
         data (dict, optional): Accepts a JSON object of structure iterable[dict]. Defaults to None.
     """
-    def __init__(self, data: list[dict] = None):
+    def __init__(self, data: list[dict] | None = None):
         if data is not None:
             self.data = data
         else:
@@ -65,7 +65,7 @@ class AgencyMetadata:
         # return response as json
         return agencies_response.json()
     
-    def __extract_schema(self, metadata: dict[dict] = None):
+    def __extract_schema(self, metadata: dict[dict] | None = None):
         """Get Agency schema of agencies available from API.
 
         Args:
