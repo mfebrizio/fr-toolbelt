@@ -79,7 +79,18 @@ def sleep_retry(timeout: int, retry: int = 3):
     return retry_decorator
 
 
-@sleep_retry(60, retry=5)
+def _ensure_json_response(response: requests.Response):
+    """Ensure request response is valid JSON by checking for 200 status code. 
+    Returns JSON response or empty dictionary.
+    """
+    if response.status_code == 200:
+        res_json = response.json()
+    else:
+        res_json = {}
+    return res_json
+
+
+@sleep_retry(60)
 def _retrieve_results_by_page_range(num_pages: int, endpoint_url: str, dict_params: dict) -> list:
     """Retrieve documents by looping over a given number of pages.
 
@@ -95,7 +106,8 @@ def _retrieve_results_by_page_range(num_pages: int, endpoint_url: str, dict_para
     for page in range(1, num_pages + 1):  # grab results from each page
         dict_params.update({"page": page})
         response = requests.get(endpoint_url, params=dict_params)
-        results_this_page = response.json()["results"]
+        response = _ensure_json_response(response)
+        results_this_page = response.get("results", [])
         results.extend(results_this_page)
         tally += len(results_this_page)
     count = response.json()["count"]
@@ -103,7 +115,7 @@ def _retrieve_results_by_page_range(num_pages: int, endpoint_url: str, dict_para
     return results, count
 
 
-@sleep_retry(60, retry=5)
+@sleep_retry(60)
 def _retrieve_results_by_next_page(endpoint_url: str, dict_params: dict) -> list:
     """Retrieve documents by accessing "next_page_url" returned by each request.
 
@@ -118,19 +130,20 @@ def _retrieve_results_by_next_page(endpoint_url: str, dict_params: dict) -> list
         list: Documents retrieved from the API.
     """
     results = []
-    response = requests.get(endpoint_url, params=dict_params).json()
+    response = requests.get(endpoint_url, params=dict_params)
+    response = _ensure_json_response(response)
     pages = response.get("total_pages", 1)
     next_page_url = response.get("next_page_url")
     counter = 0
     while next_page_url is not None:
         counter += 1
-        results_this_page = response["results"]
+        results_this_page = response.get("results", [])
         results.extend(results_this_page)
         response = requests.get(next_page_url).json()
         next_page_url = response.get("next_page_url")
     else:
         counter += 1
-        results_this_page = response["results"]
+        results_this_page = response.get("results", [])
         results.extend(results_this_page)
     
     # raise exception if failed to access all pages
