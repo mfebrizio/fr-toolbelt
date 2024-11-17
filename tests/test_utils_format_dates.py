@@ -10,9 +10,12 @@ def test__convert_to_datetime_date(
     
     for attempt in success:
         if (re.fullmatch(r"\d{4}-\d{2}-\d{2}", f"{attempt}", flags=re.I) is not None) or (int(python_version_tuple()[1]) >= 11):
+            print(attempt)
             fdate = DateFormatter(attempt)
             result = fdate._DateFormatter__convert_to_datetime_date(attempt)
             assert isinstance(result, date)
+        else:
+            continue
 
 
 def test_get_year_self(
