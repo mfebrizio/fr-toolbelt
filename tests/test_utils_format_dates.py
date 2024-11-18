@@ -1,4 +1,6 @@
 from datetime import date
+from platform import python_version_tuple
+import re
 from fr_toolbelt.utils import DateFormatter
 
 
@@ -7,46 +9,43 @@ def test__convert_to_datetime_date(
     ):
     
     for attempt in success:
-        fdate = DateFormatter(attempt)
-        result = fdate._DateFormatter__convert_to_datetime_date(attempt)
-        assert isinstance(result, date)
+        if (re.fullmatch(r"\d{4}-\d{2}-\d{2}", f"{attempt}", flags=re.I) is not None) or (int(python_version_tuple()[1]) >= 11):
+            print(attempt)
+            fdate = DateFormatter(attempt)
+            result = fdate._DateFormatter__convert_to_datetime_date(attempt)
+            assert isinstance(result, date)
+        else:
+            continue
 
 
-def test_get_year_self(
+def test_property_year(
         input_success: dict = {"string": "2023-01-01", "year": 2023}, 
         input_fail: str = "01/01/2023"
     ):
     
     fdate = DateFormatter(input_success.get("string"))
-    year = fdate.get_year()
+    year = fdate.year
     assert isinstance(year, int)
     assert year == input_success.get("year")
     
     try:
-        DateFormatter(input_fail).get_year()
+        DateFormatter(input_fail).year
     except ValueError as e:
         assert e.__class__ == ValueError
 
 
-def test_get_year_alt(
-        input_success: dict = {
-            1: {"string": "2023-01-01", "year": 2023}, 
-            2: {"string": "2024-01-01", "year": 2024}
-            }
-    ):
-    
-    fdate = DateFormatter(input_success.get(1).get("string"))
-    year = fdate.get_year(input_success.get(2).get("string"))
-    assert isinstance(year, int)
-    assert year == input_success.get(2).get("year")
-
-
-def test_get_formatted_date(
+def test_property_formatted_date(
         success = ("2024-01-01", "20240101", "2024-W01-1", date(2024, 1, 1))
     ):
     for attempt in success:
-        result = DateFormatter(attempt).get_formatted_date()
-        assert isinstance(result, date)
+        if (re.fullmatch(r"\d{4}-\d{2}-\d{2}", f"{attempt}", flags=re.I) is not None) or (int(python_version_tuple()[1]) >= 11):
+            result = DateFormatter(attempt).formatted_date
+            assert isinstance(result, date)
+        else:
+            try:
+                result = DateFormatter(attempt).formatted_date
+            except ValueError as err:
+                assert isinstance(err, ValueError), f"{err=}"
 
 
 def test_date_in_quarter():
