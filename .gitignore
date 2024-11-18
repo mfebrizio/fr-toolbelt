@@ -3,6 +3,7 @@ data/
 testing.py
 .dev/
 dev*/
+edit/
 .test/
 test/
 
