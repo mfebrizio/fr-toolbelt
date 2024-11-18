@@ -1,9 +1,10 @@
 from copy import deepcopy
-from datetime import date
+from datetime import datetime, date
 from pathlib import Path
 import re
 import time
 
+from dateutil import tz
 from pandas import DataFrame, read_csv, read_excel
 import requests
 
@@ -40,6 +41,9 @@ DEFAULT_FIELDS = (
     "json_url",
     "html_url", 
     )
+
+EST = tz.gettz("EST")
+TODAY_EST = datetime.now(tz=EST).date()
 
 
 # -- functions for handling API requests -- #
@@ -184,7 +188,7 @@ def _query_documents_endpoint(
         
         # get range of dates
         start_date = DateFormatter(dict_params.get("conditions[publication_date][gte]"))
-        end_date = DateFormatter(dict_params.get("conditions[publication_date][lte]", f"{date.today()}"))
+        end_date = DateFormatter(dict_params.get("conditions[publication_date][lte]", f"{TODAY_EST}"))
         
         # set range of years
         start_year = start_date.year
@@ -233,6 +237,8 @@ def _query_documents_endpoint(
         raise QueryError(f"Query returned document count of {response_count}.")
     
     if running_count != response_count:
+        #print(running_count)
+        #print(results[-1])
         raise QueryError(f"Failed to retrieve all {response_count} documents.")
     
     if not handle_duplicates:
@@ -258,7 +264,7 @@ def get_documents_by_date(start_date: str | date,
 
     Args:
         start_date (str): Start date when documents were published (inclusive; format must be "yyyy-mm-dd").
-        end_date (str, optional): End date (inclusive; format must be "yyyy-mm-dd"). Defaults to None (implies end date is `datetime.date.today()`).
+        end_date (str, optional): End date (inclusive; format must be "yyyy-mm-dd"). Defaults to None (implies end date is today for EST timezone).
         document_types (tuple[str] | list[str], optional): If passed, only return specific document types. 
         Valid types are "RULE" (final rules), "PRORULE" (proposed rules), "NOTICE" (notices), and "PRESDOCU" (presidential documents). Defaults to None.
         fields (tuple | list, optional): Fields/columns to retrieve. Defaults to constant DEFAULT_FIELDS.
@@ -267,16 +273,17 @@ def get_documents_by_date(start_date: str | date,
     Returns:
         tuple[list, int]: Tuple of API results, count of documents retrieved.
     """
-    params = dict_params.copy()
+    # Not passing end_date implies end date of today EST
+    if end_date is None:
+        end_date = TODAY_EST
+
     # update dictionary of parameters
+    params = dict_params.copy()
     params.update({
         "conditions[publication_date][gte]": f"{start_date}", 
-        "fields[]": fields
+        "conditions[publication_date][lte]": f"{end_date}", 
+        "fields[]": fields, 
         })
-    
-    # empty strings "" are falsey in Python: https://docs.python.org/3/library/stdtypes.html#truth-value-testing
-    if end_date:
-        params.update({"conditions[publication_date][lte]": f"{end_date}"})
     
     if document_types is not None:
         params.update({"conditions[type][]": list(document_types)})
