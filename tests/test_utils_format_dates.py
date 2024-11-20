@@ -1,6 +1,7 @@
 from datetime import date
 from platform import python_version_tuple
 import re
+
 from fr_toolbelt.utils import DateFormatter
 
 

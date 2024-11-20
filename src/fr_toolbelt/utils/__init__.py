@@ -7,9 +7,8 @@ from .duplicates import (
     remove_duplicates, 
     flag_duplicates, 
     process_duplicates, 
-    DuplicateError
+    DuplicateError,
     )
-
 from .format_dates import DateFormatter, DateFormatError
 
 __all__ = [
