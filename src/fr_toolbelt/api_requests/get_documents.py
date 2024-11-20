@@ -1,11 +1,11 @@
 from copy import deepcopy
+import csv
 from datetime import datetime, date
 from pathlib import Path
 import re
 import time
 
 from dateutil import tz
-from pandas import DataFrame, read_csv, read_excel
 import requests
 
 from ..utils.duplicates import process_duplicates
@@ -325,57 +325,38 @@ def get_documents_by_number(document_numbers: list,
     return results, count
 
 
-def _extract_document_numbers(
-        df: DataFrame, 
-        pattern: str = r"(?:[a-z]\d-)?[\w|\d]{2,4}-[\d]{5,}", 
-        alt_column: str = "html_url"
-    ) -> list[str]:
-    r"""Extract list of Federal Register document numbers from a DataFrame.
-
-    Args:
-        df (DataFrame): Input data.
-        pattern (str, optional): Regex pattern for identifying document numbers from url. 
-        Defaults to r"(?:[a-z]\d-)?[\w|\d]{2,4}-[\d]{5,}".
-        alt_column (str, optional): Alternate column to search for document numbers. Defaults to "html_url".
-
-    Returns:
-        list[str]: List of document numbers.
+def _read_csv(path_to_file, pattern: str = r"(?:[a-z]\d-)?[\w|\d]{2,4}-[\d]{5,}", alt_column: str = "html_url", **kwargs):
+    """Read document numbers from a CSV file, based on document_numbers column or alternative column with a regex pattern.
     """
-    if "document_number" in df.columns:
-        document_numbers = [f"{doc}".strip() for doc in df.loc[:, "document_number"].to_numpy()]
-    else:
-        url_list = df.loc[:, alt_column].to_numpy()
-        document_numbers = [re.search(pattern, url).group(0) for url in url_list]
-    
-    return document_numbers
+    with open(path_to_file, "r", newline="") as csvfile:
+        reader = csv.DictReader(csvfile, **kwargs)
+        if 'document_number' in reader.fieldnames:
+            document_numbers = [f"{row.get('document_number', '')}".strip() for row in reader]
+        elif alt_column in reader.fieldnames:
+            alt_list = [f"{row.get(alt_column, '')}".strip() for row in reader]
+            document_numbers = [re.search(pattern, alt).group(0) for alt in alt_list]
+        else:
+            raise InputFileError(f"document_number column or alternative id column , {alt_column}, missing from csv.")
+        return document_numbers
 
 
-def parse_document_numbers(path: Path, alt_column: str = "html_url"):
-    """Parse Federal Register document numbers from input data file.
+def parse_document_numbers(path: Path, alt_column: str = "html_url", **kwargs):
+    """Parse Federal Register document numbers from input CSV within a directory.
 
     Args:
-        path (Path): Path to input file.
+        path (Path): Path to directory containing data file.
         alt_column (str, optional): Alternate column to search for document numbers. Defaults to "html_url".
 
     Raises:
-        InputFileError: Raises error when input file is not in right format or does not exist.
+        InputFileError: Raises error when no .csv files found in directory.
 
     Returns:
         list: List of document numbers.
     """    
-    try:
-        file = next(p for p in path.iterdir() if (p.is_file() and p.name != ".gitignore"))
-    except StopIteration as err:
-        print(f"Handled exception: {err}")
-        raise InputFileError("Missing input file with document numbers.")
-    
-    if file.suffix in (".csv", ".txt", ".tsv"):
-        with open(file, "r") as f:
-            df = read_csv(f)
-    elif file.suffix in (".xlsx", ".xls", ".xlsm"):
-        with open(file, "rb") as f:
-            df = read_excel(f)
-    else:
-        raise InputFileError("Input file must be in CSV or Excel spreadsheet format.")
-    
-    return _extract_document_numbers(df, alt_column=alt_column)
+    document_numbers = []
+    files = (p for p in path.iterdir() if (p.is_file() and p.suffix in (".csv", ".txt", )))
+    for file in files:
+        document_numbers.extend(_read_csv(file, alt_column=alt_column, **kwargs))
+    if len(document_numbers) == 0:
+        raise InputFileError("No .csv files found in directory.")
+    return list(set(document_numbers))
