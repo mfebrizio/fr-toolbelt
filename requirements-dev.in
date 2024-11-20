@@ -12,7 +12,6 @@ pytest
 
 # lib
 cursor
-numpy>=1.20, <3.0
-pandas>=1.5
+python-dateutil>=2.9, <3.0
 progress>=1.6
 requests>=2.32
