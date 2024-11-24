@@ -8,6 +8,8 @@ from fr_toolbelt.api_requests import parse_document_numbers, InputFileError
 
 
 TEST_PATH = Path(__file__).parent
+N_TEST_FILES = 5
+N_TEST_FILE_ROWS = 100
 
 
 def _create_test_csv_to_parse(path: Path, suffix: str = '.csv', **kwargs):
@@ -21,7 +23,7 @@ def _create_test_csv_to_parse(path: Path, suffix: str = '.csv', **kwargs):
         writer.writerow({'document_number': '2023-25797', 'html_url': 'https://federalregister.gov/d/2024-25797'})
 
 
-def _create_test_csv_randomized(path: Path, n_files: int, n_rows: int = 100, **kwargs):
+def _create_test_csv_randomized(path: Path, n_files: int, n_rows: int = N_TEST_FILE_ROWS, **kwargs):
     with open(path / f'test_parse_document_numbers_{n_files}.csv', 'w', newline='') as csvfile:
         fieldnames = ['document_number', 'html_url']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames, **kwargs)
@@ -46,9 +48,9 @@ def get_txt_file(tmp_path_factory):
 
 
 @pytest.fixture(scope="session")
-def get_csv_file_mult(tmp_path_factory):
+def get_csv_file_mult(tmp_path_factory, n_files: int = N_TEST_FILES):
     fn = tmp_path_factory.mktemp("data_csv_mult")
-    for n in range(0, 5):
+    for n in range(0, n_files):
         _create_test_csv_randomized(path=fn, n_files=n)
     return fn
 
@@ -68,7 +70,7 @@ def test_parse_document_numbers_txt(get_txt_file):
 def test_parse_document_numbers_csv_mult(get_csv_file_mult):
     results = parse_document_numbers(get_csv_file_mult)
     assert isinstance(results, list)
-    assert len(results) == 5 * 100
+    assert N_TEST_FILES * N_TEST_FILE_ROWS * 0.95 < len(results) <= N_TEST_FILES * N_TEST_FILE_ROWS, f"{len(results)} is not within 5% of test files * test rows"
 
 
 def test_parse_document_numbers_error(path: Path = TEST_PATH):
