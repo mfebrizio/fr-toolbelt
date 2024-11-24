@@ -4,8 +4,8 @@ from datetime import datetime, date
 from pathlib import Path
 import re
 import time
+from zoneinfo import ZoneInfo
 
-from dateutil import tz
 import requests
 
 from ..utils.duplicates import process_duplicates
@@ -42,8 +42,8 @@ DEFAULT_FIELDS = (
     "html_url", 
     )
 
-EST = tz.gettz("EST")
-TODAY_EST = datetime.now(tz=EST).date()
+ET = ZoneInfo("America/New_York")  #tz.gettz("EST")
+TODAY_ET = datetime.now(tz=ET).date()
 
 
 # -- functions for handling API requests -- #
@@ -188,7 +188,7 @@ def _query_documents_endpoint(
         
         # get range of dates
         start_date = DateFormatter(dict_params.get("conditions[publication_date][gte]"))
-        end_date = DateFormatter(dict_params.get("conditions[publication_date][lte]", f"{TODAY_EST}"))
+        end_date = DateFormatter(dict_params.get("conditions[publication_date][lte]", f"{TODAY_ET}"))
         
         # set range of years
         start_year = start_date.year
@@ -275,7 +275,7 @@ def get_documents_by_date(start_date: str | date,
     """
     # Not passing end_date implies end date of today EST
     if end_date is None:
-        end_date = TODAY_EST
+        end_date = TODAY_ET
 
     # update dictionary of parameters
     params = dict_params.copy()

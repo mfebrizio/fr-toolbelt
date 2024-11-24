@@ -1,8 +1,8 @@
 from datetime import datetime, date, timedelta
 import json
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
-from dateutil import tz
 from requests import get
 
 from fr_toolbelt.api_requests import (
@@ -15,8 +15,8 @@ from fr_toolbelt.api_requests import (
 # TEST OBJECTS AND UTILS #
 
 
-EST = tz.gettz("EST")
-TODAY_EST = datetime.now(tz=EST).date()
+ET = ZoneInfo("America/New_York")  #tz.gettz("EST")
+TODAY_ET = datetime.now(tz=ET).date()
 
 TESTS_PATH = Path(__file__).parent
 
@@ -107,17 +107,17 @@ def test_get_documents_by_date_above_max_threshold(start = "2020-01-01", end = "
 
 
 def test_get_documents_by_date_no_end_date(delta = 365):
-    start = (datetime.now(tz=EST) - timedelta(delta)).date()
+    start = (datetime.now(tz=ET) - timedelta(delta)).date()
     test_error = "will remain string if error is not handled in try/except block"
     try:
         results, count = get_documents_by_date(start)
     except TypeError as err:
         test_error = err
-        results, count = get_documents_by_date(start, end_date=TODAY_EST)
+        results, count = get_documents_by_date(start, end_date=TODAY_ET)
     assert isinstance(test_error, str), "Error was handled in try/except block; bug remains in program"
-    if TODAY_EST.isoweekday() not in (6, 7):
+    if TODAY_ET.isoweekday() not in (6, 7):
         max_date = max(date.fromisoformat(r.get("publication_date")) for r in results)
-        assert max_date == TODAY_EST
+        assert max_date == TODAY_ET
     assert isinstance(results, list)
     assert count == len(results)
 
