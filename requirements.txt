@@ -14,11 +14,7 @@ idna==3.10
     # via requests
 progress==1.6
     # via fr-toolbelt (pyproject.toml)
-python-dateutil==2.9.0.post0
-    # via fr-toolbelt (pyproject.toml)
 requests==2.32.3
     # via fr-toolbelt (pyproject.toml)
-six==1.16.0
-    # via python-dateutil
 urllib3==2.2.3
     # via requests
