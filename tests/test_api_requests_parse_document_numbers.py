@@ -48,6 +48,13 @@ def get_txt_file(tmp_path_factory):
 
 
 @pytest.fixture(scope="session")
+def get_non_csv_file(tmp_path_factory):
+    fn = tmp_path_factory.mktemp("data_non_csv")
+    _create_test_csv_to_parse(path=fn, suffix=".test")
+    return fn
+
+
+@pytest.fixture(scope="session")
 def get_csv_file_mult(tmp_path_factory, n_files: int = N_TEST_FILES):
     fn = tmp_path_factory.mktemp("data_csv_mult")
     for n in range(0, n_files):
@@ -73,11 +80,23 @@ def test_parse_document_numbers_csv_mult(get_csv_file_mult):
     assert N_TEST_FILES * N_TEST_FILE_ROWS * 0.95 < len(results) <= N_TEST_FILES * N_TEST_FILE_ROWS, f"{len(results)} is not within 5% of test files * test rows"
 
 
-def test_parse_document_numbers_error(path: Path = TEST_PATH):
+def test_parse_document_numbers_error_empty(path: Path = TEST_PATH):
     test_error = None
     results_out = None
     try:
         results_out = parse_document_numbers(path)
+    except InputFileError as e:
+        test_error = e
+        assert isinstance(e, InputFileError)
+    assert test_error is not None, f"{test_error=}"
+    assert results_out is None
+
+
+def test_parse_document_numbers_error_non_csv(get_non_csv_file):
+    test_error = None
+    results_out = None
+    try:
+        results_out = parse_document_numbers(get_non_csv_file)
     except InputFileError as e:
         test_error = e
         assert isinstance(e, InputFileError)
