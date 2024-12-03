@@ -1,6 +1,7 @@
 from copy import deepcopy
 import csv
 from datetime import datetime, date
+from itertools import batched
 from pathlib import Path
 import re
 import time
@@ -174,6 +175,8 @@ def _query_documents_endpoint(
     """    
     results, running_count = [], 0
     response = requests.get(endpoint_url, params=dict_params)
+    if response.status_code != 200:
+        print(response.status_code)
     #print(response.url)
     res_json = response.json()
     max_documents_threshold = 10000
@@ -187,8 +190,11 @@ def _query_documents_endpoint(
     elif response_count > max_documents_threshold:
         
         # get range of dates
-        start_date = DateFormatter(dict_params.get("conditions[publication_date][gte]"))
+        start_date = DateFormatter(dict_params.get("conditions[publication_date][gte]", None))
         end_date = DateFormatter(dict_params.get("conditions[publication_date][lte]", f"{TODAY_ET}"))
+
+        if start_date is None:
+            raise QueryError("Missing `start_date` parameter from query.")
         
         # set range of years
         start_year = start_date.year
@@ -313,15 +319,31 @@ def get_documents_by_number(document_numbers: list,
 
     Returns:
         tuple[list, int]: Tuple of API results, count of documents retrieved.
-    """    
+    """
     if sort_data:
-        document_numbers_str = ",".join(sorted(document_numbers))
+        document_numbers = sorted(document_numbers)
+
+    max_documents_threshold = 10000
+    if len(document_numbers) > max_documents_threshold:
+        # find batch size
+        batch_size = 500
+        num_batches = (len(document_numbers) // batch_size) + 1
+        print(num_batches)
+        batches = batched(document_numbers, n=batch_size)
+        results, count = [], 0
+        for batch in batches:
+            batch_str = ",".join(batch)
+            endpoint_url = fr"https://www.federalregister.gov/api/v1/documents/{batch_str}.json?"
+            dict_params = {"fields[]": fields}
+            batch_results, batch_count = _query_documents_endpoint(endpoint_url, dict_params)
+            results.extend(batch_results)
+            count += batch_count
     else:
-        document_numbers_str = ",".join(document_numbers)
-    
-    endpoint_url = fr"https://www.federalregister.gov/api/v1/documents/{document_numbers_str}.json?"
-    dict_params = {"fields[]": fields}
-    results, count = _query_documents_endpoint(endpoint_url, dict_params)
+        document_numbers_str = ",".join(sorted(document_numbers))
+        endpoint_url = fr"https://www.federalregister.gov/api/v1/documents/{document_numbers_str}.json?"
+        dict_params = {"fields[]": fields}
+        results, count = _query_documents_endpoint(endpoint_url, dict_params)
+
     return results, count
 
 
