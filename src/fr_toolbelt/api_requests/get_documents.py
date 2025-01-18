@@ -339,7 +339,7 @@ def get_documents_by_number(document_numbers: list,
             results.extend(batch_results)
             count += batch_count
     else:
-        document_numbers_str = ",".join(sorted(document_numbers))
+        document_numbers_str = ",".join(document_numbers)
         endpoint_url = fr"https://www.federalregister.gov/api/v1/documents/{document_numbers_str}.json?"
         dict_params = {"fields[]": fields}
         results, count = _query_documents_endpoint(endpoint_url, dict_params)
