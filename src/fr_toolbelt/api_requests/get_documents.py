@@ -7,7 +7,7 @@ import time
 from zoneinfo import ZoneInfo
 
 from platform import python_version_tuple
-if int(python_version_tuple()[1]) < 12:
+if int(python_version_tuple()[1]) >= 12:
     from itertools import batched
 else:
     from itertools import islice
