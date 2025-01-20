@@ -12,8 +12,8 @@ class Presidents(FieldData):
             subfield_key: str = "identifier", 
             value_key: str = "president_id", 
             schema: dict = {
-                "transition_years": (1993, 2001, 2009, 2017, 2021), 
-                "presidents": ("william-j-clinton", "george-w-bush", "barack-obama", "donald-trump", "joe-biden"), 
+                "transition_years": (1993, 2001, 2009, 2017, 2021, 2025), 
+                "presidents": ("william-j-clinton", "george-w-bush", "barack-obama", "donald-trump", "joe-biden", "donald-trump"), 
                 }
         ) -> None:
         super().__init__(documents=documents, field_key=field_key, subfield_key=subfield_key, value_key=value_key)
