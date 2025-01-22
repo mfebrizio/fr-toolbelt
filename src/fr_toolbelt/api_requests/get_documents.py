@@ -6,6 +6,26 @@ import re
 import time
 from zoneinfo import ZoneInfo
 
+from platform import python_version_tuple
+if int(python_version_tuple()[1]) >= 12:
+    from itertools import batched
+else:
+    from itertools import islice
+
+
+    def batched(iterable, n, *, strict=False):
+        """From itertools [batched recipe](https://docs.python.org/3.13/library/itertools.html#itertools.batched).
+        Usage: batched('ABCDEFG', 3) → ABC DEF G
+        """
+        if n < 1:
+            raise ValueError('n must be at least one')
+        iterator = iter(iterable)
+        while batch := tuple(islice(iterator, n)):
+            if strict and len(batch) != n:
+                raise ValueError('batched(): incomplete batch')
+            yield batch
+
+
 import requests
 
 from ..utils.duplicates import process_duplicates
@@ -55,6 +75,10 @@ class QueryError(Exception):
 
 class InputFileError(Exception):
     pass
+
+
+class HTTP414Error(requests.HTTPError):
+    """Request produced a HTTP error for 414 URI Too Long."""
 
 
 def sleep_retry(timeout: int, retry: int = 3):
@@ -174,6 +198,10 @@ def _query_documents_endpoint(
     """    
     results, running_count = [], 0
     response = requests.get(endpoint_url, params=dict_params)
+    if response.status_code != 200:
+        #print(response.status_code)
+        if response.status_code == 414:
+            raise HTTP414Error
     #print(response.url)
     res_json = response.json()
     max_documents_threshold = 10000
@@ -187,8 +215,11 @@ def _query_documents_endpoint(
     elif response_count > max_documents_threshold:
         
         # get range of dates
-        start_date = DateFormatter(dict_params.get("conditions[publication_date][gte]"))
+        start_date = DateFormatter(dict_params.get("conditions[publication_date][gte]", None))
         end_date = DateFormatter(dict_params.get("conditions[publication_date][lte]", f"{TODAY_ET}"))
+
+        if start_date is None:
+            raise QueryError("Missing `start_date` parameter from query.")
         
         # set range of years
         start_year = start_date.year
@@ -300,6 +331,22 @@ def get_documents_by_date(start_date: str | date,
 # -- retrieve documents using input file -- #
 
 
+def _get_documents_by_batch(batch_size: int, document_numbers: list, fields: tuple | list = DEFAULT_FIELDS):
+    # find batch size
+    num_batches = (len(document_numbers) // batch_size) + 1
+    #print(num_batches)
+    batches = batched(document_numbers, n=batch_size)
+    results, count = [], 0
+    for batch in batches:
+        batch_str = ",".join(batch)
+        endpoint_url = fr"https://www.federalregister.gov/api/v1/documents/{batch_str}.json?"
+        dict_params = {"fields[]": fields}
+        batch_results, batch_count = _query_documents_endpoint(endpoint_url, dict_params)
+        results.extend(batch_results)
+        count += batch_count
+    return results, count
+
+
 def get_documents_by_number(document_numbers: list, 
                             fields: tuple | list = DEFAULT_FIELDS, 
                             sort_data: bool = True
@@ -313,15 +360,31 @@ def get_documents_by_number(document_numbers: list,
 
     Returns:
         tuple[list, int]: Tuple of API results, count of documents retrieved.
-    """    
+    """
     if sort_data:
-        document_numbers_str = ",".join(sorted(document_numbers))
+        document_numbers = sorted(document_numbers)
+
+    max_documents_threshold = 10000
+    if len(document_numbers) > max_documents_threshold:
+        batch_size = 725
+        while True:
+            try:
+                #print(f"Trying {batch_size=}")
+                results, count = _get_documents_by_batch(
+                    batch_size=batch_size, 
+                    document_numbers=document_numbers, 
+                    fields=fields,
+                    )
+                break
+            except HTTP414Error as err:
+                batch_size -= 1
+                continue
     else:
         document_numbers_str = ",".join(document_numbers)
-    
-    endpoint_url = fr"https://www.federalregister.gov/api/v1/documents/{document_numbers_str}.json?"
-    dict_params = {"fields[]": fields}
-    results, count = _query_documents_endpoint(endpoint_url, dict_params)
+        endpoint_url = fr"https://www.federalregister.gov/api/v1/documents/{document_numbers_str}.json?"
+        dict_params = {"fields[]": fields}
+        results, count = _query_documents_endpoint(endpoint_url, dict_params)
+
     return results, count
 
 
