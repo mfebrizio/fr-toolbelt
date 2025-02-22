@@ -9,6 +9,7 @@ from fr_toolbelt.api_requests import (
     _retrieve_results_by_next_page, 
     get_documents_by_date, 
     get_documents_by_number, 
+    _get_documents_by_batch,
     )
 
 
@@ -99,7 +100,7 @@ def test_get_documents_by_date_types(
     assert all(1 if r in (type_schema.get(t) for t in types) else 0 for r in res_types)
 
 
-def test_get_documents_by_date_above_max_threshold(start = "2020-01-01", end = "2022-12-31", max = 10000):
+def test_get_documents_by_date_above_max_threshold(start = "2020-01-01", end = "2022-12-31", max = 10_000):
     results, count = get_documents_by_date(start, end)
     assert count > max
     assert isinstance(results, list)
@@ -125,4 +126,22 @@ def test_get_documents_by_date_no_end_date(delta = 365):
 def test_get_documents_by_number(numbers = ["2024-02204", "2023-28203", "2023-25797"]):
     results, count = get_documents_by_number(numbers)
     assert isinstance(results, list)
-    assert count == len(results)
+    assert count == len(results) == len(numbers)
+
+
+def test_get_documents_by_number_10k(max = 10_000):
+    results_a, count_a = get_documents_by_date(start_date='2024-07-01', end_date='2024-12-31')
+    document_numbers = [doc.get('document_number', '') for doc in results_a]
+    results_b, count_b = get_documents_by_number(document_numbers)
+    assert count_a > max
+    assert isinstance(results_b, list)
+    assert count_a == len(results_a) == count_b == len(results_b)
+
+
+def test_get_documents_by_batch(batch_size: int = 250):
+    results_a, count_a = get_documents_by_date(start_date='2024-07-01', end_date='2024-12-31')
+    document_numbers = [doc.get('document_number', '') for doc in results_a]
+    results_b, count_b = _get_documents_by_batch(batch_size=batch_size, document_numbers=document_numbers)
+    assert isinstance(results_b, list)
+    assert isinstance(count_b, int)
+    assert count_a == len(results_a) == count_b == len(results_b)
