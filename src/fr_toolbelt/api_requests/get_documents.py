@@ -9,21 +9,21 @@ from zoneinfo import ZoneInfo
 from platform import python_version_tuple
 if int(python_version_tuple()[1]) >= 12:
     from itertools import batched
-# else:
-#     from itertools import islice
+else:
+    from itertools import islice
 
 
-#     def batched(iterable, n, *, strict=False):
-#         """From itertools [batched recipe](https://docs.python.org/3.13/library/itertools.html#itertools.batched).
-#         Usage: batched('ABCDEFG', 3) → ABC DEF G
-#         """
-#         if n < 1:
-#             raise ValueError('n must be at least one')
-#         iterator = iter(iterable)
-#         while batch := tuple(islice(iterator, n)):
-#             if strict and len(batch) != n:
-#                 raise ValueError('batched(): incomplete batch')
-#             yield batch
+    def batched(iterable, n, *, strict=False):
+        """From itertools [batched recipe](https://docs.python.org/3.13/library/itertools.html#itertools.batched).
+        Usage: batched('ABCDEFG', 3) → ABC DEF G
+        """
+        if n < 1:
+            raise ValueError('n must be at least one')
+        iterator = iter(iterable)
+        while batch := tuple(islice(iterator, n)):
+            if strict and len(batch) != n:
+                raise ValueError('batched(): incomplete batch')
+            yield batch
 
 
 import requests
