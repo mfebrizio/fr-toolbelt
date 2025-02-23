@@ -333,7 +333,7 @@ def get_documents_by_date(start_date: str | date,
 
 def _get_documents_by_batch(batch_size: int, document_numbers: list, fields: tuple | list = DEFAULT_FIELDS):
     num_batches = (len(document_numbers) // batch_size) + 1
-    print(num_batches)
+    # print(num_batches)
     batches = batched(document_numbers, n=batch_size)
     results, count = [], 0
     # counter = 0
