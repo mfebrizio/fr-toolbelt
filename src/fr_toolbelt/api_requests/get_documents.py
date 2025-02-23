@@ -332,17 +332,22 @@ def get_documents_by_date(start_date: str | date,
 
 
 def _get_documents_by_batch(batch_size: int, document_numbers: list, fields: tuple | list = DEFAULT_FIELDS):
-    # find batch size
     num_batches = (len(document_numbers) // batch_size) + 1
-    #print(num_batches)
+    # print(num_batches)
     batches = batched(document_numbers, n=batch_size)
     results, count = [], 0
+    # counter = 0
     for batch in batches:
+        # counter += 1
+        # print(f'{counter=}')
+        # print(f'batch_len: {len(batch)}')
         batch_str = ",".join(batch)
         endpoint_url = fr"https://www.federalregister.gov/api/v1/documents/{batch_str}.json?"
         dict_params = {"fields[]": fields}
         batch_results, batch_count = _query_documents_endpoint(endpoint_url, dict_params)
+        # print(len(batch_results))
         results.extend(batch_results)
+        # print(len(results))
         count += batch_count
     return results, count
 
@@ -366,7 +371,7 @@ def get_documents_by_number(document_numbers: list,
 
     max_documents_threshold = 10000
     if len(document_numbers) > max_documents_threshold:
-        batch_size = 725
+        batch_size = 250  # bug with API if higher batch size is used
         while True:
             try:
                 #print(f"Trying {batch_size=}")

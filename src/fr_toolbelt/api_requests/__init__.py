@@ -11,7 +11,8 @@ from .get_documents import (
     get_documents_by_date, 
     get_documents_by_number, 
     parse_document_numbers, 
-    _retrieve_results_by_next_page
+    _retrieve_results_by_next_page,
+    _get_documents_by_batch,
 )
 
 __all__ = [

@@ -13,4 +13,4 @@ pytest
 # lib
 cursor
 progress>=1.6
-requests>=2.32
+requests>=2.31
